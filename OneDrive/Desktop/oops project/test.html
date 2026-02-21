@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ahmedabad Fleet Simulation</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    #map { height: 100vh; width: 100vw; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // Initialize map at Ahmedabad
+    var map = L.map('map').setView([23.0225, 72.5714], 13);
+
+    // OpenStreetMap free tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Create vehicle marker
+    var vehicleMarker = L.marker([23.0225, 72.5714]).addTo(map)
+      .bindPopup("🚗 Vehicle 1: Ahmedabad")
+      .openPopup();
+
+    // Function to move vehicle randomly (simulating GPS updates)
+    function moveVehicle() {
+      // Get current marker position
+      var latlng = vehicleMarker.getLatLng();
+
+      // Random small movement (latitude/longitude change)
+      var newLat = latlng.lat + (Math.random() - 0.5) * 0.01;
+      var newLng = latlng.lng + (Math.random() - 0.5) * 0.01;
+
+      // Update marker position
+      vehicleMarker.setLatLng([newLat, newLng]);
+      vehicleMarker.setPopupContent(`🚗 Vehicle 1<br>Lat: ${newLat.toFixed(4)}, Lng: ${newLng.toFixed(4)}`);
+    }
+
+    // Move vehicle every 3 seconds
+    setInterval(moveVehicle, 3000);
+  </script>
+</body>
+</html>

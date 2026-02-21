@@ -1,0 +1,25 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Build outputs / binaries
+*.exe
+*.out
+*.o
+
+# Large archives
+*.tar.xz
+*.zip
+*.gz
+
+# Logs
+*.log
+afms_log.txt
+
+# VS Code local settings
+.vscode/
+
+# OS files
+Thumbs.db
+.DS_Store
+ntuser.ini
