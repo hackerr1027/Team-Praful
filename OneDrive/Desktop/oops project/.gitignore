@@ -23,3 +23,6 @@ afms_log.txt
 Thumbs.db
 .DS_Store
 ntuser.ini
+
+# Environment Variables
+.env

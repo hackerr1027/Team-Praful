@@ -3,6 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
 
 const app = express();
 const port = 5500;
@@ -14,11 +15,84 @@ app.use(express.static(__dirname));
 // ═══════════════════════════════════════════════
 // SUPABASE CONFIGURATION
 // ═══════════════════════════════════════════════
-const SUPABASE_URL = 'https://snjdtqodcplupqicvndx.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNuamR0cW9kY3BsdXBxaWN2bmR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NDMxOTIsImV4cCI6MjA4NzIxOTE5Mn0.tyMzdRqfGAvuIh1lawQHVDvUYkCSqnO-dZ_eEDcAzAE';
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let supabaseConnected = false;
+
+// ═══════════════════════════════════════════════
+// MOCK DRIVERS DATA (Hackathon optimization)
+// ═══════════════════════════════════════════════
+let drivers = [];
+const DRIVER_STATUSES = ['On Duty', 'Off Duty', 'Suspended'];
+
+function initMockDrivers() {
+    const names = ['Raj Patel', 'Amit Shah', 'Suresh Kumar', 'Mohammad Ali', 'Rahul Desai', 'Vikram Singh', 'Jayesh Mehta', 'Prakash Parmar', 'Manoj Joshi', 'Kishan Rajput'];
+    const current_date = new Date();
+
+    for (let i = 0; i < 10; i++) {
+        // Random days until expiry (-10 to 60)
+        const daysToExpiry = Math.floor(Math.random() * 70) - 10;
+        const expiryDate = new Date();
+        expiryDate.setDate(current_date.getDate() + daysToExpiry);
+
+        const hoursDrivenToday = (Math.random() * 14).toFixed(1);
+        const maxDailyHours = 12; // typical legal limit
+
+        let initialStatus = DRIVER_STATUSES[Math.floor(Math.random() * 2)]; // Start mostly On/Off Duty
+        if (daysToExpiry < 0) {
+            initialStatus = 'Suspended'; // Auto suspend if expired
+        }
+
+        const score = (Math.random() * 2 + 3).toFixed(1); // Score between 3.0 and 5.0
+
+        drivers.push({
+            id: `DRV-${String(i + 1).padStart(3, '0')}`,
+            name: names[i],
+            license_expiry: expiryDate.toISOString().split('T')[0],
+            hours_driven_today: parseFloat(hoursDrivenToday),
+            max_daily_hours: maxDailyHours,
+            weekly_total: parseFloat((hoursDrivenToday * 5 + Math.random() * 20).toFixed(1)),
+            status: initialStatus,
+            safety_score: parseFloat(score)
+        });
+    }
+}
+
+// Generate an alert if hours are exceeded
+setInterval(() => {
+    // Simulate hours increasing over time for "On Duty" drivers
+    drivers.forEach(d => {
+        if (d.status === 'On Duty') {
+            d.hours_driven_today += 0.5; // add 30 mins
+
+            // If exceeded, generate an alert
+            if (d.hours_driven_today > d.max_daily_hours) {
+                const existingAlert = alerts.find(a =>
+                    a.alert_type === 'fatigue' &&
+                    a.message.includes(d.id) &&
+                    !a.resolved
+                );
+
+                if (!existingAlert) {
+                    const alert = {
+                        id: Date.now() + Math.random(),
+                        vehicle_id: 'N/A', // Not tied to a specific vehicle initially, or link to assigned
+                        alert_type: 'fatigue',
+                        message: `Driver ${d.name} (${d.id}) exceeded max daily hours (${d.hours_driven_today.toFixed(1)} / ${d.max_daily_hours} hrs)`,
+                        severity: 'high',
+                        timestamp: new Date().toISOString(),
+                        resolved: false
+                    };
+                    alerts.push(alert);
+                    syncAlertToSupabase(alert); // Try to sync it if possible
+                    console.log(`⚠️ ALERT: Driver Fatigue Limit Exceeded: ${d.name}`);
+                }
+            }
+        }
+    });
+}, 60000 * 5); // check every 5 mins
 
 // Test Supabase connection on startup
 async function testSupabaseConnection() {
@@ -143,6 +217,11 @@ app.get('/', (req, res) => {
 // Serve Command Center
 app.get('/command-center', (req, res) => {
     res.sendFile(__dirname + '/command_center.html');
+});
+
+// Serve Safety Officer Dashboard
+app.get('/safety-officer', (req, res) => {
+    res.sendFile(__dirname + '/safety_officer.html');
 });
 
 // ═══════════════════════════════════════════════
@@ -480,6 +559,124 @@ app.get('/routes.json', (req, res) => {
 });
 
 // ═══════════════════════════════════════════════
+// DRIVER ENDPOINTS
+// ═══════════════════════════════════════════════
+
+// Get all drivers
+app.get('/drivers', (req, res) => {
+    res.json(drivers);
+});
+
+// Update driver status
+app.post('/drivers/:id/status', (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!DRIVER_STATUSES.includes(status)) {
+        return res.status(400).send('Invalid status');
+    }
+
+    const driver = drivers.find(d => d.id === id);
+    if (!driver) {
+        return res.status(404).send('Driver not found');
+    }
+
+    driver.status = status;
+    res.json(driver);
+});
+
+// Simulate pre-dispatch check
+app.post('/dispatch/check', (req, res) => {
+    const { driver_id, vehicle_id } = req.body;
+
+    const driver = drivers.find(d => d.id === driver_id);
+    if (!driver) return res.status(404).json({ allowed: false, reason: 'Driver not found' });
+
+    // 1. Check suspended status
+    if (driver.status === 'Suspended') {
+        return res.json({ allowed: false, reason: `Driver ${driver.id} is Suspended.` });
+    }
+
+    // 2. Check license expiry
+    const today = new Date().toISOString().split('T')[0];
+    if (driver.license_expiry < today) {
+        return res.json({ allowed: false, reason: `Driver ${driver.id} license expired on ${driver.license_expiry}.` });
+    }
+
+    // 3. Check hours
+    if (driver.hours_driven_today >= driver.max_daily_hours) {
+        return res.json({ allowed: false, reason: `Driver ${driver.id} reached max daily limit (${driver.max_daily_hours}h).` });
+    }
+
+    // 4. Check vehicle alerts
+    if (vehicle_id) {
+        const vehicleAlerts = alerts.filter(a => a.vehicle_id === vehicle_id && !a.resolved && a.severity === 'high');
+        if (vehicleAlerts.length > 0) {
+            return res.json({ allowed: false, reason: `Vehicle ${vehicle_id} has unresolved high-severity alerts.` });
+        }
+    }
+
+    res.json({ allowed: true, reason: 'Checks passed.' });
+});
+
+// ═══════════════════════════════════════════════
+// DROWSINESS DETECTION ENDPOINT (DASHCAM)
+// ═══════════════════════════════════════════════
+let drowsinessEvents = {}; // Structure: { [driver_id]: [timestamp1, timestamp2, ...] }
+
+app.post('/drowsiness', (req, res) => {
+    const { driver_id, score } = req.body;
+
+    const driver = drivers.find(d => d.id === driver_id);
+    if (!driver) {
+        return res.status(404).send('Driver not found');
+    }
+
+    const now = Date.now();
+
+    // Initialize array for driver if it doesn't exist
+    if (!drowsinessEvents[driver_id]) {
+        drowsinessEvents[driver_id] = [];
+    }
+
+    // Add current event
+    drowsinessEvents[driver_id].push(now);
+
+    // Clean up events older than 60 seconds (60000 ms)
+    const oneMinuteAgo = now - 60000;
+    drowsinessEvents[driver_id] = drowsinessEvents[driver_id].filter(time => time > oneMinuteAgo);
+
+    console.log(`👁️ Dashcam Event: Driver ${driver_id} (Events in last 60s: ${drowsinessEvents[driver_id].length})`);
+
+    // Check if 5 events occurred within the last 60 seconds
+    if (drowsinessEvents[driver_id].length >= 5) {
+        // Debounce alert: Check if an unresolved HIGH severity drowsiness alert already exists
+        const existingAlert = alerts.find(a =>
+            a.alert_type === 'drowsiness' &&
+            a.message.includes(driver_id) &&
+            !a.resolved
+        );
+
+        if (!existingAlert) {
+            const alert = {
+                id: Date.now() + Math.random(),
+                vehicle_id: 'N/A', // Assuming dashcam is tied to driver currently, not specific vehicle for hackathon demo
+                alert_type: 'drowsiness',
+                message: `CRITICAL: Driver ${driver.name} (${driver.id}) is showing signs of severe drowsiness (5+ events/min). CALL DRIVER IMMEDIATELY.`,
+                severity: 'high',
+                timestamp: new Date().toISOString(),
+                resolved: false
+            };
+            alerts.push(alert);
+            syncAlertToSupabase(alert); // Sync if possible
+            console.log(`🚨 HIGH ALERT: Drowsiness limit reached for ${driver.name}! Dashboard notification triggered.`);
+        }
+    }
+
+    res.json({ success: true, events_last_min: drowsinessEvents[driver_id].length });
+});
+
+// ═══════════════════════════════════════════════
 // STARTUP
 // ═══════════════════════════════════════════════
 
@@ -505,6 +702,7 @@ app.listen(port, async () => {
     // Initialize
     await testSupabaseConnection();
     initPendingCargo();
+    initMockDrivers();
 
     console.log('Server ready! Waiting for vehicles...\n');
 });

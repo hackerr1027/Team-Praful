@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Safety Officer Dashboard</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a14;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f35;
+            --bg-card-hover: #222845;
+            --border: rgba(255, 255, 255, 0.06);
+            --text-primary: #f0f0f5;
+            --text-secondary: #8b8fa3;
+            --text-muted: #5a5e72;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --accent-orange: #f97316;
+            --glow-blue: rgba(59, 130, 246, 0.15);
+            --glow-green: rgba(16, 185, 129, 0.15);
+            --glow-red: rgba(239, 68, 68, 0.15);
+            --glow-yellow: rgba(245, 158, 11, 0.15);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at 20% 0%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Nav */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 28px;
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-brand .logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .nav-brand h1 {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .nav-brand .subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 16px;
+        }
+
+        .nav-link {
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border: 1px solid transparent;
+            transition: 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-link.active {
+            color: var(--accent-red);
+            background: var(--glow-red);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 1;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 24px 28px;
+        }
+
+        /* KPIs */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px 24px;
+            position: relative;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+        }
+
+        .kpi-card.green::before {
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan));
+        }
+
+        .kpi-card.yellow::before {
+            background: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange));
+        }
+
+        .kpi-card.red::before {
+            background: linear-gradient(90deg, var(--accent-red), var(--accent-orange));
+        }
+
+        .kpi-card.blue::before {
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+        }
+
+        .kpi-title {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 800;
+        }
+
+        .green .kpi-value {
+            color: var(--accent-green);
+        }
+
+        .yellow .kpi-value {
+            color: var(--accent-yellow);
+        }
+
+        .red .kpi-value {
+            color: var(--accent-red);
+        }
+
+        .blue .kpi-value {
+            color: var(--accent-blue);
+        }
+
+        /* Grids */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        /* Panels */
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 10px 16px;
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table td {
+            padding: 12px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        /* Badges */
+        .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge.green {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge.yellow {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-yellow);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .badge.red {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .badge.gray {
+            background: rgba(107, 114, 128, 0.15);
+            color: #9ca3af;
+            border: 1px solid rgba(107, 114, 128, 0.3);
+        }
+
+        /* Progress Bar */
+        .progress-bg {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            height: 6px;
+            width: 100%;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        .progress-bar.green {
+            background: var(--accent-green);
+        }
+
+        .progress-bar.red {
+            background: var(--accent-red);
+        }
+
+        .progress-bar.yellow {
+            background: var(--accent-yellow);
+        }
+
+        /* Status Select */
+        .status-select {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .status-select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        /* Alerts List */
+        .alerts-list {
+            padding: 12px 16px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .alert-card {
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 10px;
+            border-left: 3px solid;
+            background: rgba(255, 255, 255, 0.02);
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+        }
+
+        .alert-card.high {
+            border-left-color: var(--accent-red);
+        }
+
+        .alert-card.medium {
+            border-left-color: var(--accent-yellow);
+        }
+
+        .alert-card.low {
+            border-left-color: var(--accent-orange);
+        }
+
+        .resolve-btn {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--accent-green);
+            color: var(--accent-green);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .resolve-btn:hover {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        /* Pre-dispatch test UI */
+        .dispatch-panel {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .dispatch-btn {
+            background: linear-gradient(135deg, var(--accent-blue), #8b5cf6);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .dispatch-btn:hover {
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+
+        .dispatch-result {
+            margin-top: 15px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .result-pass {
+            color: var(--accent-green);
+        }
+
+        .result-fail {
+            color: var(--accent-red);
+        }
+
+        #test-driver-input {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background: #111;
+            color: white;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="top-nav">
+        <div class="nav-brand">
+            <div class="logo">🛡️</div>
+            <div>
+                <h1>Safety Officer</h1>
+                <div class="subtitle">Compliance & Risk Management</div>
+            </div>
+        </div>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Live Map</a>
+            <a href="/command-center" class="nav-link">Command Center</a>
+            <a href="#" class="nav-link active">Safety Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="main-container">
+
+        <div class="kpi-grid">
+            <div class="kpi-card green">
+                <div class="kpi-title">Active Drivers</div>
+                <div class="kpi-value" id="kpi-active">0</div>
+            </div>
+            <div class="kpi-card red">
+                <div class="kpi-title">Suspended Drivers</div>
+                <div class="kpi-value" id="kpi-suspended">0</div>
+            </div>
+            <div class="kpi-card yellow">
+                <div class="kpi-title">Fatigue Warnings</div>
+                <div class="kpi-value" id="kpi-fatigue">0</div>
+            </div>
+            <div class="kpi-card blue">
+                <div class="kpi-title">Avg Safety Score</div>
+                <div class="kpi-value" id="kpi-score">0.0</div>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <!-- Left Column: Drivers Table -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">👥 Driver Compliance & Status Control</div>
+                </div>
+                <div style="overflow-y: auto; max-height: 600px;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Driver ID / Name</th>
+                                <th>License Stat</th>
+                                <th>Hours Today</th>
+                                <th>Safety Score</th>
+                                <th>Action/Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="driver-tbody">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Right Column: Alerts and Dispatch Check -->
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">🚨 Active Safety Alerts</div>
+                    </div>
+                    <div class="alerts-list" id="alerts-container">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">📹 Live AI Dashcam</div>
+                    </div>
+                    <div class="dispatch-panel" style="padding: 15px;">
+                        <div style="display:flex; gap: 10px; justify-content: center; margin-bottom: 12px;">
+                            <input type="text" id="dashcam-driver-input" placeholder="Driver ID (e.g. DRV-001)"
+                                class="status-select" style="width: 150px; padding: 6px;">
+                            <button class="resolve-btn"
+                                style="background: var(--glow-blue); border-color: var(--accent-blue); color: var(--accent-blue); font-size: 11px; padding: 6px 12px;"
+                                onclick="toggleDashcam(true)">Turn ON</button>
+                            <button class="resolve-btn"
+                                style="background: var(--glow-red); border-color: var(--accent-red); color: var(--accent-red); font-size: 11px; padding: 6px 12px;"
+                                onclick="toggleDashcam(false)">Turn OFF</button>
+                        </div>
+                        <div
+                            style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;">
+                            <span id="dashcam-placeholder" style="color: var(--text-muted); font-size: 12px;">Camera
+                                Offline</span>
+                            <img id="dashcam-feed" src=""
+                                style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">✅ Pre-Dispatch Validation Test</div>
+                    </div>
+                    <div class="dispatch-panel">
+                        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">Simulate dispatch
+                            checks to verify rules.</p>
+                        <input type="text" id="test-driver-input" placeholder="e.g. DRV-001">
+                        <button class="dispatch-btn" onclick="testDispatch()">Check Clearance</button>
+                        <div id="dispatch-result" class="dispatch-result"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = ''; // Use relative paths since we are on the same server
+
+        async function fetchDashboardData() {
+            try {
+                const [driversRes, alertsRes] = await Promise.all([
+                    fetch(`${API_URL}/drivers`),
+                    fetch(`${API_URL}/alerts`)
+                ]);
+
+                const drivers = await driversRes.json();
+                const alerts = await alertsRes.json();
+
+                renderDrivers(drivers);
+                renderAlerts(alerts);
+                updateKPIs(drivers, alerts);
+            } catch (error) {
+                console.error('Failed to fetch data', error);
+            }
+        }
+
+        function renderDrivers(drivers) {
+            const tbody = document.getElementById('driver-tbody');
+            tbody.innerHTML = '';
+
+            const today = new Date().toISOString().split('T')[0];
+
+            drivers.forEach(d => {
+                // Formatting
+                const isLicenseExpired = d.license_expiry < today;
+                const licenseBadge = isLicenseExpired ? 'red' : 'green';
+                const licenseText = isLicenseExpired ? `Expired (${d.license_expiry})` : `Valid (${d.license_expiry})`;
+
+                const hoursRatio = d.hours_driven_today / d.max_daily_hours;
+                const hoursColor = hoursRatio >= 1 ? 'red' : (hoursRatio > 0.8 ? 'yellow' : 'green');
+                const hoursBadge = hoursRatio >= 1 ? 'red' : 'gray';
+
+                const scoreColor = d.safety_score < 3 ? 'red' : (d.safety_score < 4 ? 'yellow' : 'green');
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div style="font-weight: 600;">${d.name}</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">${d.id}</div>
+                    </td>
+                    <td><span class="badge ${licenseBadge}">${licenseText}</span></td>
+                    <td>
+                        <div style="display:flex; justify-content:space-between; font-size: 11px;">
+                            <span>${d.hours_driven_today.toFixed(1)} / ${d.max_daily_hours} h</span>
+                            <span class="badge ${hoursBadge}" style="padding: 1px 4px;">Limit</span>
+                        </div>
+                        <div class="progress-bg">
+                            <div class="progress-bar ${hoursColor}" style="width: ${Math.min(hoursRatio * 100, 100)}%;"></div>
+                        </div>
+                    </td>
+                    <td>
+                        <span style="font-size: 16px; font-weight:bold; color: var(--accent-${scoreColor});">${d.safety_score.toFixed(1)}</span>
+                    </td>
+                    <td>
+                        <select class="status-select" onchange="updateDriverStatus('${d.id}', this.value)">
+                            <option value="On Duty" ${d.status === 'On Duty' ? 'selected' : ''}>On Duty</option>
+                            <option value="Off Duty" ${d.status === 'Off Duty' ? 'selected' : ''}>Off Duty</option>
+                            <option value="Suspended" ${d.status === 'Suspended' ? 'selected' : ''}>Suspended</option>
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderAlerts(alerts) {
+            const container = document.getElementById('alerts-container');
+            container.innerHTML = '';
+
+            const activeAlerts = alerts.filter(a => !a.resolved);
+            if (activeAlerts.length === 0) {
+                container.innerHTML = '<div style="color:var(--text-muted); font-size: 12px; text-align:center; padding: 20px;">No active safety alerts.</div>';
+                return;
+            }
+
+            activeAlerts.reverse().forEach(a => {
+                const el = document.createElement('div');
+                el.className = `alert-card ${a.severity}`;
+                el.innerHTML = `
+                    <div>
+                        <div style="font-size: 10px; text-transform:uppercase; color: var(--accent-yellow); font-weight:600; margin-bottom:4px;">${a.alert_type} - ${a.severity}</div>
+                        <div style="font-size: 12px; margin-bottom: 6px;">${a.message}</div>
+                        <div style="font-size: 10px; color: var(--text-muted);">${new Date(a.timestamp).toLocaleTimeString()}</div>
+                    </div>
+                    <button class="resolve-btn" onclick="resolveAlert('${a.id}')">Resolve</button>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        function updateKPIs(drivers, alerts) {
+            let active = 0; let suspended = 0; let scoreSum = 0;
+
+            drivers.forEach(d => {
+                if (d.status === 'On Duty') active++;
+                if (d.status === 'Suspended') suspended++;
+                scoreSum += d.safety_score;
+            });
+
+            const fatigueAlerts = alerts.filter(a => !a.resolved && a.alert_type === 'fatigue').length;
+
+            document.getElementById('kpi-active').textContent = active;
+            document.getElementById('kpi-suspended').textContent = suspended;
+            document.getElementById('kpi-fatigue').textContent = fatigueAlerts;
+            document.getElementById('kpi-score').textContent = (scoreSum / (Math.max(drivers.length, 1))).toFixed(1);
+        }
+
+        // Actions
+        async function updateDriverStatus(id, newStatus) {
+            try {
+                await fetch(`${API_URL}/drivers/${id}/status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                fetchDashboardData();
+            } catch (err) { alert('Failed to update status'); }
+        }
+
+        async function resolveAlert(id) {
+            try {
+                await fetch(`${API_URL}/alerts/${id}/resolve`, { method: 'POST' });
+                fetchDashboardData();
+            } catch (err) { alert('Failed to resolve alert'); }
+        }
+
+        async function testDispatch() {
+            const driverId = document.getElementById('test-driver-input').value.trim().toUpperCase();
+            if (!driverId) return;
+
+            const resultDiv = document.getElementById('dispatch-result');
+            resultDiv.innerHTML = 'Checking...';
+            resultDiv.className = 'dispatch-result';
+
+            try {
+                const res = await fetch(`${API_URL}/dispatch/check`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ driver_id: driverId })
+                });
+                const data = await res.json();
+
+                if (data.allowed) {
+                    resultDiv.innerHTML = `✅ CLEARED: ${data.reason}`;
+                    resultDiv.className = 'dispatch-result result-pass';
+                } else {
+                    resultDiv.innerHTML = `❌ BLOCKED: ${data.reason}`;
+                    resultDiv.className = 'dispatch-result result-fail';
+                }
+            } catch (err) {
+                resultDiv.innerHTML = 'Error validating dispatch.';
+            }
+        }
+
+        async function toggleDashcam(turnOn) {
+            const driverId = document.getElementById('dashcam-driver-input').value.trim().toUpperCase();
+            if (turnOn && !driverId) {
+                alert("Please enter a Driver ID to monitor.");
+                return;
+            }
+
+            const feedImg = document.getElementById('dashcam-feed');
+            const placeholder = document.getElementById('dashcam-placeholder');
+            const FLASK_URL = 'http://localhost:5001';
+
+            try {
+                if (turnOn) {
+                    const res = await fetch(`${FLASK_URL}/start_camera`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ driver_id: driverId })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        placeholder.style.display = 'none';
+                        feedImg.style.display = 'block';
+                        feedImg.src = `${FLASK_URL}/video_feed?t=${new Date().getTime()}`;
+                    } else {
+                        alert("Error: " + data.error);
+                    }
+                } else {
+                    await fetch(`${FLASK_URL}/stop_camera`, { method: 'POST' });
+                    feedImg.src = "";
+                    feedImg.style.display = 'none';
+                    placeholder.style.display = 'block';
+                }
+            } catch (err) {
+                alert('Dashcam server is unreachable. Ensure the AI Dashcam Server is running on port 5001.');
+                console.error(err);
+            }
+        }
+
+        // Init and refresh loop
+        fetchDashboardData();
+        setInterval(fetchDashboardData, 5000); // 5 sec live sync
+
+    </script>
+</body>
+
+</html>
