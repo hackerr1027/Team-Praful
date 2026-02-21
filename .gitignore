@@ -1,0 +1,28 @@
+# VS Code settings
+.vscode/
+
+# Large video files (too big for GitHub)
+*.mp4
+*.mov
+*.avi
+*.webm
+
+# PDF documents
+*.pdf
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python server artifacts
+__pycache__/
+*.py[cod]
+
+# Node (if ever used)
+node_modules/
+npm-debug.log*
+
+# Misc
+*.log
+*.tmp
