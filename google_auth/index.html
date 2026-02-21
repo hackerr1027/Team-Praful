@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Management System</title>
+    <link rel="stylesheet" href="styles.css">
+    <meta name="google-signin-client_id" content="263914103895-mcbbpm3o1qgjt1e9gr10ja2ltsq5jl1e.apps.googleusercontent.com">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Fleet Management System</h1>
+            <p>Optimize your delivery fleet lifecycle</p>
+        </header>
+        
+        <main class="main-content">
+            <div class="auth-container">
+                <div class="auth-tabs">
+                    <button class="tab-btn active" onclick="showLogin()">Login</button>
+                    <button class="tab-btn" onclick="showRegister()">Register</button>
+                </div>
+                
+                <!-- Login Form -->
+                <div id="login-form" class="auth-form active">
+                    <h2>Login to Your Account</h2>
+                    <form onsubmit="handleLogin(event)">
+                        <div class="form-group">
+                            <label for="login-email">Email</label>
+                            <input type="email" id="login-email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">Password</label>
+                            <input type="password" id="login-password" name="password" required>
+                        </div>
+                        <button type="submit" class="btn-primary">Login</button>
+                    </form>
+                    
+                    <div class="divider">
+                        <span>OR</span>
+                    </div>
+                    
+                    <div class="google-signin-container">
+                        <div id="google-signin-button"></div>
+                    </div>
+                    
+                    <p class="auth-switch">
+                        Don't have an account? <a href="#" onclick="showRegister()">Register here</a>
+                    </p>
+                </div>
+                
+                <!-- Register Form -->
+                <div id="register-form" class="auth-form">
+                    <h2>Create New Account</h2>
+                    <form onsubmit="handleRegister(event)">
+                        <div class="form-group">
+                            <label for="register-name">Full Name</label>
+                            <input type="text" id="register-name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-email">Email</label>
+                            <input type="email" id="register-email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password">Password</label>
+                            <input type="password" id="register-password" name="password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-confirm-password">Confirm Password</label>
+                            <input type="password" id="register-confirm-password" name="confirmPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-role">Role</label>
+                            <select id="register-role" name="role" required>
+                                <option value="">Select Role</option>
+                                <option value="fleet_manager">Fleet Manager</option>
+                                <option value="dispatcher">Dispatcher</option>
+                                <option value="safety_officer">Safety Officer</option>
+                                <option value="financial_analyst">Financial Analyst</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-primary">Register</button>
+                    </form>
+                    
+                    <div class="divider">
+                        <span>OR</span>
+                    </div>
+                    
+                    <div class="google-signin-container">
+                        <div id="google-signin-button-register"></div>
+                    </div>
+                    
+                    <p class="auth-switch">
+                        Already have an account? <a href="#" onclick="showLogin()">Login here</a>
+                    </p>
+                </div>
+            </div>
+        </main>
+        
+        <div id="message" class="message"></div>
+        
+        <!-- Role Selection Modal -->
+        <div id="role-modal" class="modal">
+            <div class="modal-content">
+                <h3>Select Your Role</h3>
+                <p>Please select your role to continue with Google Sign-In</p>
+                <div class="form-group">
+                    <label for="modal-role">Role</label>
+                    <select id="modal-role" name="role" required>
+                        <option value="">Select Role</option>
+                        <option value="fleet_manager">Fleet Manager</option>
+                        <option value="dispatcher">Dispatcher</option>
+                        <option value="safety_officer">Safety Officer</option>
+                        <option value="financial_analyst">Financial Analyst</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-secondary" onclick="closeRoleModal()">Cancel</button>
+                    <button type="button" class="btn-primary" onclick="confirmGoogleSignIn()">Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
