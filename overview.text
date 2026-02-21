@@ -1,16 +1,16 @@
-================================================================================
-AUTONOMOUS FLEET MANAGEMENT SYSTEM (AFMS) - COMPREHENSIVE PROJECT OVERVIEW
+﻿================================================================================
+MERIDIAN - Autonomous Fleet Intelligence (MERIDIAN) - COMPREHENSIVE PROJECT OVERVIEW
 ================================================================================
 
 1. EXECUTIVE SUMMARY
 --------------------------------------------------------------------------------
-The AFMS is a robust, full-stack enterprise platform designed for real-time fleet operations, telemetry monitoring, safety surveillance, trip dispatching, and financial analytics. Built using a modern polyglot architecture, it handles everything from core database operations and RESTful APIs via a Node.js server, complex algorithmic logic with a fast C++ engine, computer vision techniques for driver safety via Python, and a responsive frontend suite using native web technologies.
+The MERIDIAN is a robust, full-stack enterprise platform designed for real-time fleet operations, telemetry monitoring, safety surveillance, trip dispatching, and financial analytics. Built using a modern polyglot architecture, it handles everything from core database operations and RESTful APIs via a Node.js server, complex algorithmic logic with a fast C++ engine, computer vision techniques for driver safety via Python, and a responsive frontend suite using native web technologies.
 
 2. ARCHITECTURE & TECHNOLOGY STACK
 --------------------------------------------------------------------------------
 *   Backend REST API: Node.js with Express.js
 *   Database Engine: Supabase (PostgreSQL)
-*   Optimization Engine: C++ (compiled to an executable 'afms_backend.exe') utilizing `cpp-httplib` for handling high-performance pathfinding, graph simulation, and driver-to-vehicle allocation.
+*   Optimization Engine: C++ (compiled to an executable 'MERIDIAN_backend.exe') utilizing `cpp-httplib` for handling high-performance pathfinding, graph simulation, and driver-to-vehicle allocation.
 *   Artificial Intelligence Integration: Python scripts utilizing OpenCV and MediaPipe for facial landmark recognition (Drowsiness and Yawning Detection via EAR and MAR formulas) interfacing directly with the backend.
 *   Frontend Presentation: HTML5, CSS3, Vanilla JavaScript, Chart.js (for analytics), Leaflet.js (for live GPS mapping).
 
@@ -50,7 +50,7 @@ A. Trip Dispatching Lifecycle (trip_dispatcher.html & server.js)
         - [Dispatched] -> [In Transit]: Updates map coordinates dynamically.
         - [In Transit] -> [Completed]: Frees the driver and vehicle back to 'Available', making them ready for a new trip. The vehicle's odometer updates based on the trip's estimated distance.
 
-B. The C++ Allocation & Routing Engine (afms_backend.cpp)
+B. The C++ Allocation & Routing Engine (MERIDIAN_backend.cpp)
     *   The C++ engine listens on a separate port and provides an optimized `/api/allocations` endpoint.
     *   Graph Structure: The city/network is represented as an adjacency matrix or list with weighted edges representing time/distance.
     *   Pathfinding: Evaluates optimal routes for trips factoring in dynamic traffic nodes (A* or Dijkstra simulation).
@@ -90,4 +90,5 @@ E. Financial Analytics & Cost Automation (financial_analytics.html)
 
 6. CONCLUSION
 --------------------------------------------------------------------------------
-The AFMS successfully integrates standard web methodologies with lower-level algorithms (C++) and real-time Artificial Intelligence (Python). Its state machine guarantees that commercial constraints (driver limits, vehicle capacities, database race conditions) are respected, whilst the underlying Supabase postgres structure uses built-in triggers to guarantee data integrity across interconnected service layers organically.
+The MERIDIAN successfully integrates standard web methodologies with lower-level algorithms (C++) and real-time Artificial Intelligence (Python). Its state machine guarantees that commercial constraints (driver limits, vehicle capacities, database race conditions) are respected, whilst the underlying Supabase postgres structure uses built-in triggers to guarantee data integrity across interconnected service layers organically.
+
