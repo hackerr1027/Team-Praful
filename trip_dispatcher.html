@@ -1,0 +1,1723 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Trip Dispatcher — Fleet Operations</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Trip Dispatcher & Management System for fleet operations">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0a0a14;
+            --bg2: #111827;
+            --card: #1a1f35;
+            --card-hover: #222845;
+            --border: rgba(255, 255, 255, 0.06);
+            --t1: #f0f0f5;
+            --t2: #8b8fa3;
+            --t3: #5a5e72;
+            --blue: #3b82f6;
+            --cyan: #06b6d4;
+            --green: #10b981;
+            --yellow: #f59e0b;
+            --red: #ef4444;
+            --purple: #8b5cf6;
+            --orange: #f97316;
+            --r: 12px;
+            --rs: 8px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--t1);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at 20% 0%, rgba(59, 130, 246, 0.06) 0%, transparent 50%), radial-gradient(ellipse at 80% 100%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Nav */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 28px;
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-brand .logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--green), var(--cyan));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .nav-brand h1 {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, #a0aec0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-brand .subtitle {
+            font-size: 11px;
+            color: var(--t3);
+            font-weight: 400;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-link {
+            padding: 8px 16px;
+            border-radius: var(--rs);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--t2);
+            text-decoration: none;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover {
+            color: var(--t1);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--border);
+        }
+
+        .nav-link.active {
+            color: var(--green);
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        /* Main */
+        .main {
+            position: relative;
+            z-index: 1;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 24px 28px;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 16px 20px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            background: var(--card-hover);
+            transform: translateY(-2px);
+        }
+
+        .stat-val {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--t3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            background: var(--card);
+            border-radius: var(--r);
+            padding: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            border-radius: var(--rs);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--t2);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .tab:hover {
+            color: var(--t1);
+        }
+
+        .tab.active {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--blue);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Panel */
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .panel-hdr {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-hdr h3 {
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-blue {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--blue);
+        }
+
+        .badge-green {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--green);
+        }
+
+        .badge-yellow {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--yellow);
+        }
+
+        .badge-red {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--red);
+        }
+
+        .badge-gray {
+            background: rgba(107, 114, 128, 0.15);
+            color: #9ca3af;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 18px;
+            border-radius: var(--rs);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--blue), var(--purple));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--green), var(--cyan));
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--t2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--t1);
+        }
+
+        .btn-sm {
+            padding: 5px 12px;
+            font-size: 12px;
+        }
+
+        /* Form */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            padding: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--t2);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--rs);
+            color: var(--t1);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .form-select option {
+            background: var(--bg2);
+            color: var(--t1);
+        }
+
+        .form-textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+
+        /* Capacity Gauge */
+        .capacity-gauge {
+            margin-top: 8px;
+        }
+
+        .gauge-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.06);
+            overflow: hidden;
+        }
+
+        .gauge-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s, background 0.3s;
+        }
+
+        .gauge-text {
+            font-size: 11px;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        /* Validation */
+        .validation-panel {
+            padding: 12px 20px;
+        }
+
+        .val-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: var(--rs);
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .val-item.error {
+            background: rgba(239, 68, 68, 0.08);
+            color: var(--red);
+        }
+
+        .val-item.warning {
+            background: rgba(245, 158, 11, 0.08);
+            color: var(--yellow);
+        }
+
+        .val-item.info {
+            background: rgba(59, 130, 246, 0.08);
+            color: var(--blue);
+        }
+
+        .val-item.success {
+            background: rgba(16, 185, 129, 0.08);
+            color: var(--green);
+        }
+
+        .val-id {
+            font-weight: 700;
+            min-width: 40px;
+        }
+
+        /* Table */
+        .tbl {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .tbl th {
+            text-align: left;
+            padding: 10px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--t3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tbl td {
+            padding: 12px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .tbl tbody tr {
+            transition: background 0.15s;
+        }
+
+        .tbl tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-hdr {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 15px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 14px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--t2);
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 24px;
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            padding: 12px 18px;
+            border-radius: var(--rs);
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s;
+            max-width: 400px;
+        }
+
+        .toast-success {
+            background: var(--bg2);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--green);
+        }
+
+        .toast-error {
+            background: var(--bg2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--red);
+        }
+
+        .toast-warning {
+            background: var(--bg2);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: var(--yellow);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Empty state */
+        .empty {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--t3);
+        }
+
+        .empty-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+
+        .empty-text {
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        /* Status badge colors */
+        .status-Draft {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--blue);
+        }
+
+        .status-Dispatched {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--yellow);
+        }
+
+        .status-Completed {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--green);
+        }
+
+        .status-Cancelled {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--red);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .stats-bar {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Nav -->
+    <nav class="top-nav">
+        <div class="nav-brand">
+            <div class="logo">🚛</div>
+            <div>
+                <h1>Trip Dispatcher</h1>
+                <div class="subtitle">Fleet Operations Management</div>
+            </div>
+        </div>
+        <div class="nav-links">
+            <a href="/" class="nav-link">🗺️ Map View</a>
+            <a href="/command-center" class="nav-link">📊 Command Center</a>
+            <a href="/trip-dispatcher" class="nav-link active">🚛 Dispatcher</a>
+            <a href="/safety-officer" class="nav-link">🛡️ Safety Officer</a>
+            <a href="/financial-analytics" class="nav-link">💰 Financial</a>
+        </div>
+    </nav>
+
+    <div class="main">
+        <!-- Stats -->
+        <div class="stats-bar" id="stats-bar">
+            <div class="stat-card">
+                <div class="stat-val" style="color:var(--blue)" id="s-total">0</div>
+                <div class="stat-label">Total Trips</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" style="color:var(--cyan)" id="s-draft">0</div>
+                <div class="stat-label">Drafts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" style="color:var(--yellow)" id="s-dispatched">0</div>
+                <div class="stat-label">Dispatched</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" style="color:var(--green)" id="s-completed">0</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" style="color:var(--red)" id="s-cancelled">0</div>
+                <div class="stat-label">Cancelled</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" style="color:var(--purple)" id="s-drivers">0</div>
+                <div class="stat-label">Drivers</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('trips')">📋 Trips</button>
+            <button class="tab" onclick="switchTab('create')">➕ Create Trip</button>
+            <button class="tab" onclick="switchTab('vehicles')">🚛 Vehicles</button>
+            <button class="tab" onclick="switchTab('maintenance')">🔧 Maintenance</button>
+            <button class="tab" onclick="switchTab('drivers')">👤 Drivers</button>
+        </div>
+
+        <!-- Tab: Trips List -->
+        <div class="tab-content active" id="tab-trips">
+            <div class="panel">
+                <div class="panel-hdr">
+                    <h3>🚚 Trip Management <span class="badge badge-blue" id="trip-count">0</span></h3>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <select class="form-select" id="trip-filter" onchange="loadTrips()" style="min-width:120px;">
+                            <option value="All">All Status</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Dispatched">Dispatched</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                        <button class="btn btn-outline btn-sm" onclick="loadTrips()">🔄 Refresh</button>
+                    </div>
+                </div>
+                <div style="max-height:500px;overflow-y:auto;">
+                    <table class="tbl">
+                        <thead>
+                            <tr>
+                                <th>Trip #</th>
+                                <th>Vehicle</th>
+                                <th>Driver</th>
+                                <th>Route</th>
+                                <th>Cargo</th>
+                                <th>Pickup</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trips-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Create Trip -->
+        <div class="tab-content" id="tab-create">
+            <div class="panel">
+                <div class="panel-hdr">
+                    <h3>➕ Create New Trip</h3>
+                    <button class="btn btn-outline btn-sm" onclick="resetForm()">🔄 Reset</button>
+                </div>
+                <div class="form-grid">
+                    <!-- Step 1: Vehicle -->
+                    <div class="form-group">
+                        <label class="form-label">🚚 Select Vehicle *</label>
+                        <select class="form-select" id="f-vehicle" onchange="onVehicleChange()">
+                            <option value="">— Choose Vehicle —</option>
+                        </select>
+                        <div id="vehicle-info" style="font-size:11px;color:var(--t3);"></div>
+                    </div>
+
+                    <!-- Step 2: Driver -->
+                    <div class="form-group">
+                        <label class="form-label">👤 Select Driver *</label>
+                        <select class="form-select" id="f-driver" onchange="onDriverChange()">
+                            <option value="">— Choose Driver —</option>
+                        </select>
+                        <div id="driver-info" style="font-size:11px;color:var(--t3);"></div>
+                    </div>
+
+                    <!-- Step 3: Cargo -->
+                    <div class="form-group">
+                        <label class="form-label">📦 Cargo Weight (kg) *</label>
+                        <input type="number" class="form-input" id="f-weight" placeholder="e.g. 3200" min="0"
+                            oninput="onWeightChange()">
+                        <div class="capacity-gauge" id="cap-gauge" style="display:none;">
+                            <div class="gauge-bar">
+                                <div class="gauge-fill" id="cap-fill"></div>
+                            </div>
+                            <div class="gauge-text" id="cap-text"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">📦 Cargo Type</label>
+                        <select class="form-select" id="f-cargo-type">
+                            <option>General</option>
+                            <option>Electronics</option>
+                            <option>Perishable</option>
+                            <option>Construction</option>
+                            <option>Industrial</option>
+                            <option>Medical</option>
+                            <option>Documents</option>
+                            <option>Hazmat</option>
+                        </select>
+                    </div>
+
+                    <!-- Step 4: Route -->
+                    <div class="form-group">
+                        <label class="form-label">📍 Origin *</label>
+                        <select class="form-select" id="f-origin">
+                            <option value="">— Select Origin —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">🏁 Destination *</label>
+                        <select class="form-select" id="f-dest">
+                            <option value="">— Select Destination —</option>
+                        </select>
+                    </div>
+
+                    <!-- Step 5: Schedule -->
+                    <div class="form-group">
+                        <label class="form-label">⏰ Pickup Time *</label>
+                        <input type="datetime-local" class="form-input" id="f-pickup">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">🏁 Delivery Deadline *</label>
+                        <input type="datetime-local" class="form-input" id="f-deadline">
+                    </div>
+
+                    <div class="form-group full">
+                        <label class="form-label">📝 Cargo Description</label>
+                        <textarea class="form-textarea" id="f-desc"
+                            placeholder="Describe the cargo contents..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Validation Panel -->
+                <div class="validation-panel" id="val-panel" style="display:none;">
+                    <div
+                        style="font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
+                        Real-time Validation</div>
+                    <div id="val-items"></div>
+                </div>
+
+                <div
+                    style="padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;">
+                    <button class="btn btn-outline" onclick="validateForm()">🔍 Validate</button>
+                    <button class="btn btn-primary" id="btn-create-draft" onclick="createTrip()">📋 Create
+                        Draft</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Vehicles (Registry) -->
+        <div class="tab-content" id="tab-vehicles">
+            <div class="panel">
+                <div class="panel-hdr" style="justify-content: flex-start; gap: 20px;">
+                    <h3>🚛 Vehicle Registry <span class="badge badge-purple"
+                            style="background:rgba(139,92,246,0.15);color:var(--purple);" id="vehicle-count">0</span>
+                    </h3>
+                    <div style="display:flex;gap:8px;align-items:center;margin-left:auto;">
+                        <button class="btn btn-outline btn-sm" onclick="loadVehicles()">🔄 Refresh</button>
+                        <button class="btn btn-primary btn-sm" onclick="openVehicleModal()">➕ Add Vehicle</button>
+                    </div>
+                </div>
+                <div style="max-height:500px;overflow-y:auto;">
+                    <table class="tbl">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name / Model</th>
+                                <th>License Plate</th>
+                                <th>Type</th>
+                                <th>Max Cap. (kg)</th>
+                                <th>Odometer (km)</th>
+                                <th>Registry Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vehicles-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Maintenance -->
+        <div class="tab-content" id="tab-maintenance">
+            <div class="panel">
+                <div class="panel-hdr" style="justify-content: flex-start; gap: 20px;">
+                    <h3>🔧 Service & Maintenance <span class="badge badge-blue" id="maintenance-count">0</span></h3>
+                    <div style="display:flex;gap:8px;align-items:center;margin-left:auto;">
+                        <button class="btn btn-outline btn-sm" onclick="loadMaintenance()">🔄 Refresh</button>
+                        <button class="btn btn-primary btn-sm" onclick="openMaintenanceModal()">🛠️ Log Service</button>
+                    </div>
+                </div>
+                <div style="max-height:500px;overflow-y:auto;">
+                    <table class="tbl">
+                        <thead>
+                            <tr>
+                                <th>Log ID</th>
+                                <th>Vehicle</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Notes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="maintenance-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Drivers -->
+        <div class="tab-content" id="tab-drivers">
+            <div class="panel">
+                <div class="panel-hdr" style="justify-content: flex-start; gap: 20px;">
+                    <h3>👤 Driver Management <span class="badge badge-purple"
+                            style="background:rgba(139,92,246,0.15);color:var(--purple);" id="driver-count">0</span>
+                    </h3>
+                    <div style="display:flex;gap:8px;align-items:center;margin-left:auto;">
+                        <button class="btn btn-outline btn-sm" onclick="loadDrivers()">🔄 Refresh</button>
+                        <button class="btn btn-primary btn-sm" onclick="openDriverModal()">➕ Add Driver</button>
+                    </div>
+                </div>
+                <div style="max-height:500px;overflow-y:auto;">
+                    <table class="tbl">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>License #</th>
+                                <th>Class</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Shift</th>
+                                <th>Hours Today</th>
+                                <th>Trips Done</th>
+                                <th>Rating</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="drivers-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+    <!-- Vehicle Modal -->
+    <div class="modal-overlay" id="vehicle-modal">
+        <div class="modal">
+            <div class="modal-hdr"><span id="v-modal-title">➕ Add Vehicle</span><button class="modal-close"
+                    onclick="closeModal('vehicle-modal')">✕</button></div>
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Vehicle ID *</label>
+                        <input type="text" class="form-input" id="v-id" placeholder="e.g. V-101">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Name / Model *</label>
+                        <input type="text" class="form-input" id="v-name" placeholder="e.g. Ford Transit 250">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">License Plate * (Unique)</label>
+                        <input type="text" class="form-input" id="v-plate" placeholder="e.g. ABC-1234">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Type</label>
+                        <select class="form-select" id="v-type">
+                            <option>Truck</option>
+                            <option>Van</option>
+                            <option>Car</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Max Capacity (kg)</label>
+                        <input type="number" class="form-input" id="v-cap" value="2000" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Odometer (km)</label>
+                        <input type="number" class="form-input" id="v-odo" value="0" min="0">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('vehicle-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveVehicle()">Save Vehicle</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Maintenance Modal -->
+    <div class="modal-overlay" id="maintenance-modal">
+        <div class="modal">
+            <div class="modal-hdr"><span>🛠️ Log Maintenance Service</span><button class="modal-close"
+                    onclick="closeModal('maintenance-modal')">✕</button></div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom:16px;">
+                    <label class="form-label">Vehicle *</label>
+                    <select class="form-select" id="m-vehicle"></select>
+                    <p style="font-size:11px;color:var(--yellow);margin-top:6px;">⚠️ Logging an Open service will
+                        immediately put the vehicle 'In Shop' and block dispatch.</p>
+                </div>
+                <div class="form-group" style="margin-bottom:16px;">
+                    <label class="form-label">Service Type *</label>
+                    <select class="form-select" id="m-type">
+                        <option>Preventative</option>
+                        <option>Repair</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mechanic Notes</label>
+                    <textarea class="form-textarea" id="m-notes"
+                        placeholder="Describe the issue or routine maintenance..."
+                        style="width:100%;height:80px;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('maintenance-modal')">Cancel</button>
+                <button class="btn btn-danger" onclick="saveMaintenance()">Create Log</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Trip Modal -->
+    <div class="modal-overlay" id="cancel-modal">
+        <div class="modal">
+            <div class="modal-hdr"><span>⚠️ Cancel Trip</span><button class="modal-close"
+                    onclick="closeModal('cancel-modal')">✕</button></div>
+            <div class="modal-body">
+                <p style="margin-bottom:12px;color:var(--t2);font-size:13px;">Please provide a reason for cancellation:
+                </p>
+                <textarea class="form-textarea" id="cancel-reason" placeholder="Cancellation reason..."
+                    style="width:100%;"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('cancel-modal')">Back</button>
+                <button class="btn btn-danger" onclick="confirmCancel()">Cancel Trip</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Driver Modal -->
+    <div class="modal-overlay" id="driver-modal">
+        <div class="modal">
+            <div class="modal-hdr"><span>➕ Add Driver</span><button class="modal-close"
+                    onclick="closeModal('driver-modal')">✕</button></div>
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" class="form-input" id="d-name" placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">License Number *</label>
+                        <input type="text" class="form-input" id="d-license" placeholder="CDL-123456">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">License Class</label>
+                        <select class="form-select" id="d-class">
+                            <option value="Heavy">Heavy (CDL-A)</option>
+                            <option value="Medium" selected>Medium (CDL-B)</option>
+                            <option value="Light">Light (Standard)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone Number</label>
+                        <input type="text" class="form-input" id="d-phone" placeholder="555-0199">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('driver-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveDriver()">Save Driver</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toasts -->
+    <div class="toast-container" id="toasts"></div>
+
+    <script>
+        const API = 'http://127.0.0.1:5500';
+        const DISPATCHER_ID = crypto.randomUUID(); // Unique ID for soft-locks per session
+        let allDrivers = [], allLocations = [], cancelTripId = null, cancelTripVersion = null;
+
+        // ── TAB SWITCHING ──
+        function switchTab(name) {
+            document.querySelectorAll('.tab').forEach((t, i) => {
+                const tabs = ['trips', 'create', 'vehicles', 'maintenance', 'drivers'];
+                t.classList.toggle('active', tabs[i] === name);
+            });
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+
+            if (name === 'trips') loadTrips();
+            if (name === 'drivers') loadDrivers();
+            if (name === 'vehicles') loadVehicles();
+            if (name === 'maintenance') loadMaintenance();
+            if (name === 'create') { loadFormSelects(); setDefaultTimes(); }
+        }
+
+        // ── TOAST ──
+        function showToast(msg, type = 'success') {
+            const t = document.createElement('div');
+            t.className = 'toast toast-' + type;
+            t.innerHTML = (type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️') + ' ' + msg;
+            document.getElementById('toasts').appendChild(t);
+            setTimeout(() => t.remove(), 4000);
+        }
+
+        // ── MODAL ──
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        // ── STATS ──
+        async function loadStats() {
+            try {
+                const r = await fetch(API + '/api/dispatcher-stats');
+                const d = await r.json();
+                document.getElementById('s-total').textContent = d.trips?.total || 0;
+                document.getElementById('s-draft').textContent = d.trips?.Draft || 0;
+                document.getElementById('s-dispatched').textContent = d.trips?.Dispatched || 0;
+                document.getElementById('s-completed').textContent = d.trips?.Completed || 0;
+                document.getElementById('s-cancelled').textContent = d.trips?.Cancelled || 0;
+                document.getElementById('s-drivers').textContent = d.drivers?.total || 0;
+            } catch (e) { console.error('Stats error:', e); }
+        }
+
+        // ── TRIPS ──
+        async function loadTrips() {
+            try {
+                const filter = document.getElementById('trip-filter').value;
+                const url = filter !== 'All' ? `${API}/api/trips?status=${filter}` : `${API}/api/trips`;
+                const r = await fetch(url);
+                const trips = await r.json();
+                document.getElementById('trip-count').textContent = trips.length;
+                const tbody = document.getElementById('trips-tbody');
+
+                if (trips.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No trips found. Create your first trip!</div><button class="btn btn-primary btn-sm" onclick="switchTab(\'create\')">➕ Create Trip</button></div></td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = trips.map(t => {
+                    const driverName = t.drivers?.name || 'N/A';
+                    const pickup = t.pickup_time ? new Date(t.pickup_time).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : 'N/A';
+                    const actions = getActions(t);
+                    return `<tr>
+                        <td><span style="font-weight:700;color:var(--blue);">#${t.trip_number}</span></td>
+                        <td>${t.vehicle_id} ${t.vehicle_info ? '<span style="color:var(--t3);font-size:11px;">(' + t.vehicle_info.type + ')</span>' : ''}</td>
+                        <td>${driverName}</td>
+                        <td style="font-size:12px;">${t.origin_name} → ${t.destination_name}</td>
+                        <td>${t.cargo_weight_kg}kg <span style="color:var(--t3);font-size:11px;">${t.cargo_type}</span></td>
+                        <td style="font-size:12px;">${pickup}</td>
+                        <td><span class="badge status-${t.status}">${t.status}</span></td>
+                        <td>${actions}</td>
+                    </tr>`;
+                }).join('');
+            } catch (e) { console.error('Trips error:', e); }
+        }
+
+        function getActions(trip) {
+            let html = '';
+            if (trip.status === 'Draft') {
+                html += `<button class="btn btn-success btn-sm" onclick="transitionTrip('${trip.id}','Dispatched',${trip.version})">🚀 Dispatch</button> `;
+                html += `<button class="btn btn-danger btn-sm" onclick="openCancelModal('${trip.id}',${trip.version})">✕</button>`;
+            } else if (trip.status === 'Dispatched') {
+                html += `<button class="btn btn-sm" style="background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.2);" onclick="transitionTrip('${trip.id}','Completed',${trip.version})">✅ Complete</button> `;
+                html += `<button class="btn btn-danger btn-sm" onclick="openCancelModal('${trip.id}',${trip.version})">✕</button>`;
+            }
+            return html || '<span style="color:var(--t3);font-size:11px;">—</span>';
+        }
+
+        async function transitionTrip(id, status, version) {
+            try {
+                const r = await fetch(`${API}/api/trips/${id}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status, version })
+                });
+                if (r.ok) {
+                    showToast(`Trip ${status.toLowerCase()} successfully!`);
+                    broadcastUpdate();
+                } else {
+                    const err = await r.json();
+                    showToast(err.error || 'Failed to update trip', 'error');
+                }
+            } catch (e) { showToast('Network error', 'error'); }
+        }
+
+        function openCancelModal(id, version) {
+            cancelTripId = id; cancelTripVersion = version;
+            document.getElementById('cancel-reason').value = '';
+            openModal('cancel-modal');
+        }
+
+        async function confirmCancel() {
+            const reason = document.getElementById('cancel-reason').value.trim() || 'No reason provided';
+            await transitionTrip(cancelTripId, 'Cancelled', cancelTripVersion);
+            closeModal('cancel-modal');
+        }
+
+        // ── DRIVERS ──
+        async function loadDrivers() {
+            try {
+                const r = await fetch(API + '/api/drivers');
+                allDrivers = await r.json();
+                document.getElementById('driver-count').textContent = allDrivers.length;
+                const tbody = document.getElementById('drivers-tbody');
+
+                if (allDrivers.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9"><div class="empty"><div class="empty-icon">👤</div><div class="empty-text">No drivers currently available or registered in the system.</div></div></td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = allDrivers.map(d => `<tr>
+                    <td><span style="font-weight:600;">${d.name}</span></td>
+                    <td style="font-size:12px;font-family:monospace;color:var(--cyan);">${d.license_number}</td>
+                    <td><span class="badge badge-blue">${d.license_class}</span></td>
+                    <td style="font-size:12px;">${d.phone || '—'}</td>
+                    <td><span class="badge status-${d.status === 'Available' ? 'Completed' : d.status === 'On Trip' ? 'Dispatched' : 'Cancelled'}">${d.status}</span></td>
+                    <td style="font-size:12px;">${d.shift_start || '08:00'} - ${d.shift_end || '20:00'}</td>
+                    <td>${d.hours_driven_today || 0}h / ${d.max_daily_hours || 10}h</td>
+                    <td>${d.total_trips_completed || 0}</td>
+                    <td>⭐ ${d.rating || '5.00'}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="deleteDriver('${d.id}')" ${d.status !== 'Available' ? 'disabled' : ''}>Delete</button>
+                    </td>
+                </tr>`).join('');
+            } catch (e) { console.error('Drivers error:', e); }
+        }
+
+        function openDriverModal() {
+            ['d-name', 'd-license', 'd-phone'].forEach(id => document.getElementById(id).value = '');
+            openModal('driver-modal');
+        }
+
+        async function saveDriver() {
+            const data = {
+                name: document.getElementById('d-name').value.trim(),
+                license_number: document.getElementById('d-license').value.trim(),
+                license_class: document.getElementById('d-class').value,
+                phone: document.getElementById('d-phone').value.trim()
+            };
+
+            if (!data.name || !data.license_number) return showToast('Name and License # are required', 'warning');
+
+            try {
+                const r = await fetch(`${API}/api/drivers`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (r.ok) {
+                    showToast('Driver added successfully!');
+                    closeModal('driver-modal');
+                    broadcastUpdate();
+                } else {
+                    const err = await r.json();
+                    showToast(err.error || 'Failed to add driver', 'error');
+                }
+            } catch (e) { showToast('Network error', 'error'); }
+        }
+
+        async function deleteDriver(id) {
+            if (!confirm('Are you sure you want to delete this driver?')) return;
+            try {
+                const r = await fetch(`${API}/api/drivers/${id}`, { method: 'DELETE' });
+                if (r.ok) {
+                    showToast('Driver deleted!');
+                    broadcastUpdate();
+                } else {
+                    const err = await r.json();
+                    showToast(err.error || 'Failed to delete driver', 'error');
+                }
+            } catch (e) { showToast('Network error', 'error'); }
+        }
+
+        // ── CREATE TRIP FORM ──
+        async function loadFormSelects() {
+            // Vehicles from fleet
+            try {
+                const r = await fetch(API + '/fleet');
+                const vehicles = await r.json();
+                const sel = document.getElementById('f-vehicle');
+                const currentVal = sel.value;
+                sel.innerHTML = '<option value="">— Choose Vehicle —</option>';
+                vehicles.forEach(v => {
+                    const cap = getCapacity(v.type);
+                    sel.innerHTML += `<option value="${v.id}" data-type="${v.type}" data-cap="${cap}" data-status="${v.status}">${v.id} — ${v.type} (${cap}kg max) [${v.status}]</option>`;
+                });
+                if (currentVal) sel.value = currentVal;
+            } catch (e) { }
+
+            // Drivers
+            try {
+                const r = await fetch(`${API}/api/available-drivers?session_id=${DISPATCHER_ID}`);
+                const drivers = await r.json();
+                const sel = document.getElementById('f-driver');
+                const currentVal = sel.value;
+                sel.innerHTML = '<option value="">— Choose Driver —</option>';
+                drivers.forEach(d => {
+                    sel.innerHTML += `<option value="${d.id}">${d.name} — ${d.license_class} (${d.license_number})</option>`;
+                });
+                if (currentVal) sel.value = currentVal;
+            } catch (e) { }
+
+            // Locations
+            try {
+                const r = await fetch(API + '/api/locations');
+                allLocations = await r.json();
+                const orig = document.getElementById('f-origin');
+                const dest = document.getElementById('f-dest');
+                const origVal = orig.value;
+                const destVal = dest.value;
+
+                orig.innerHTML = '<option value="">— Select Origin —</option>';
+                dest.innerHTML = '<option value="">— Select Destination —</option>';
+                allLocations.forEach(l => {
+                    const opt = `<option value="${l.name}" data-lat="${l.lat}" data-lon="${l.lon}">${l.name} (${l.region})</option>`;
+                    orig.innerHTML += opt;
+                    dest.innerHTML += opt;
+                });
+
+                if (origVal) orig.value = origVal;
+                if (destVal) dest.value = destVal;
+            } catch (e) { }
+        }
+
+        function setDefaultTimes() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + 60);
+            const pickup = now.toISOString().slice(0, 16);
+            now.setHours(now.getHours() + 4);
+            const deadline = now.toISOString().slice(0, 16);
+            document.getElementById('f-pickup').value = pickup;
+            document.getElementById('f-deadline').value = deadline;
+        }
+
+        function getCapacity(type) {
+            return { 'Truck': 8000, 'Van': 3000, 'Car': 500 }[type] || 2000;
+        }
+
+        async function softLock(type, id) {
+            if (!id) return;
+            try {
+                const r = await fetch(`${API}/api/${type}/${id}/soft-lock`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: DISPATCHER_ID })
+                });
+                if (!r.ok) {
+                    const err = await r.json();
+                    showToast(err.error || `Failed to lock ${type}`, 'warning');
+                    if (type === 'vehicles') {
+                        document.getElementById('f-vehicle').value = '';
+                        document.getElementById('vehicle-info').innerHTML = '';
+                        onWeightChange();
+                    }
+                    if (type === 'drivers') {
+                        document.getElementById('f-driver').value = '';
+                    }
+                }
+            } catch (e) { console.error('Soft lock error', e); }
+        }
+
+        function onVehicleChange() {
+            const sel = document.getElementById('f-vehicle');
+            const opt = sel.options[sel.selectedIndex];
+            if (opt && opt.value) {
+                document.getElementById('vehicle-info').innerHTML = `Type: <strong>${opt.dataset.type}</strong> | Max: <strong>${opt.dataset.cap}kg</strong> | Status: <strong>${opt.dataset.status}</strong> <span style="color:var(--green);margin-left:8px;">✅ Locked for draft</span>`;
+                softLock('vehicles', opt.value);
+            } else {
+                document.getElementById('vehicle-info').innerHTML = '';
+            }
+            onWeightChange();
+        }
+
+        function onDriverChange() {
+            const sel = document.getElementById('f-driver');
+            if (sel.value) {
+                softLock('drivers', sel.value);
+            }
+        }
+
+        function onWeightChange() {
+            const weight = parseFloat(document.getElementById('f-weight').value) || 0;
+            const sel = document.getElementById('f-vehicle');
+            const opt = sel.options[sel.selectedIndex];
+            const gauge = document.getElementById('cap-gauge');
+
+            if (!opt || !opt.value || weight === 0) { gauge.style.display = 'none'; return; }
+            gauge.style.display = 'block';
+
+            const cap = parseFloat(opt.dataset.cap);
+            const pct = Math.min((weight / cap) * 100, 120);
+            const fill = document.getElementById('cap-fill');
+            const text = document.getElementById('cap-text');
+
+            fill.style.width = Math.min(pct, 100) + '%';
+
+            if (pct > 100) {
+                fill.style.background = 'linear-gradient(90deg, var(--red), #ff6b6b)';
+                text.style.color = 'var(--red)';
+                text.textContent = `🛑 OVERWEIGHT — ${weight}kg / ${cap}kg (${pct.toFixed(1)}%) — Exceeds by ${weight - cap}kg`;
+            } else if (pct > 85) {
+                fill.style.background = 'linear-gradient(90deg, var(--yellow), var(--orange))';
+                text.style.color = 'var(--yellow)';
+                text.textContent = `⚠️ Near Capacity — ${weight}kg / ${cap}kg (${pct.toFixed(1)}%)`;
+            } else {
+                fill.style.background = 'linear-gradient(90deg, var(--green), var(--cyan))';
+                text.style.color = 'var(--green)';
+                text.textContent = `✅ ${weight}kg / ${cap}kg (${pct.toFixed(1)}%)`;
+            }
+        }
+
+        async function validateForm() {
+            const tripData = gatherFormData();
+            try {
+                const r = await fetch(API + '/api/trips/validate', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(tripData)
+                });
+                const result = await r.json();
+                renderValidation(result);
+            } catch (e) { showToast('Validation failed', 'error'); }
+        }
+
+        function renderValidation(result) {
+            const panel = document.getElementById('val-panel');
+            const items = document.getElementById('val-items');
+            panel.style.display = 'block';
+
+            let html = '';
+            if ((result.errors || []).length === 0 && (result.warnings || []).length === 0) {
+                html = '<div class="val-item success">✅ All validations passed — ready to create draft</div>';
+            }
+            (result.errors || []).forEach(e => {
+                html += `<div class="val-item error"><span class="val-id">${e.id}</span> 🛑 ${e.message}</div>`;
+            });
+            (result.warnings || []).forEach(w => {
+                html += `<div class="val-item warning"><span class="val-id">${w.id}</span> ⚠️ ${w.message}</div>`;
+            });
+            (result.info || []).forEach(i => {
+                html += `<div class="val-item info"><span class="val-id">${i.id}</span> ℹ️ ${i.message}</div>`;
+            });
+            items.innerHTML = html;
+        }
+
+        function gatherFormData() {
+            const origSel = document.getElementById('f-origin');
+            const destSel = document.getElementById('f-dest');
+            const origOpt = origSel.options[origSel.selectedIndex];
+            const destOpt = destSel.options[destSel.selectedIndex];
+
+            return {
+                vehicle_id: document.getElementById('f-vehicle').value,
+                driver_id: document.getElementById('f-driver').value,
+                cargo_weight_kg: parseFloat(document.getElementById('f-weight').value) || 0,
+                cargo_type: document.getElementById('f-cargo-type').value,
+                cargo_description: document.getElementById('f-desc').value.trim(),
+                origin_name: origSel.value,
+                destination_name: destSel.value,
+                origin_lat: origOpt?.dataset?.lat || null,
+                origin_lon: origOpt?.dataset?.lon || null,
+                destination_lat: destOpt?.dataset?.lat || null,
+                destination_lon: destOpt?.dataset?.lon || null,
+                pickup_time: document.getElementById('f-pickup').value ? new Date(document.getElementById('f-pickup').value).toISOString() : null,
+                delivery_deadline: document.getElementById('f-deadline').value ? new Date(document.getElementById('f-deadline').value).toISOString() : null
+            };
+        }
+
+        async function createTrip() {
+            const tripData = gatherFormData();
+
+            try {
+                const r = await fetch(API + '/api/trips', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(tripData)
+                });
+                if (r.ok) {
+                    const result = await r.json();
+                    showToast(`Trip #${result.trip.trip_number} created as Draft!`);
+                    if (result.validation.warnings.length > 0) {
+                        showToast(`${result.validation.warnings.length} warning(s) acknowledged`, 'warning');
+                    }
+                    resetForm();
+                    switchTab('trips');
+                    broadcastUpdate();
+                } else {
+                    const err = await r.json();
+                    if (err.errors) {
+                        renderValidation(err);
+                        showToast('Validation failed — fix errors above', 'error');
+                    } else {
+                        showToast(err.error || 'Failed to create trip', 'error');
+                    }
+                }
+            } catch (e) { showToast('Network error: ' + e.message, 'error'); }
+        }
+
+        function resetForm() {
+            ['f-vehicle', 'f-driver', 'f-origin', 'f-dest'].forEach(id => document.getElementById(id).selectedIndex = 0);
+            ['f-weight', 'f-desc'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('f-cargo-type').selectedIndex = 0;
+            document.getElementById('cap-gauge').style.display = 'none';
+            document.getElementById('val-panel').style.display = 'none';
+            document.getElementById('vehicle-info').innerHTML = '';
+            setDefaultTimes();
+        }
+
+        // ── VEHICLE REGISTRY ──
+        async function loadVehicles() {
+            try {
+                const r = await fetch(API + '/api/vehicles');
+                const vehicles = await r.json();
+                document.getElementById('vehicle-count').textContent = vehicles.length;
+                const tbody = document.getElementById('vehicles-tbody');
+
+                if (vehicles.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><div class="empty-icon">🚛</div><div class="empty-text">No vehicles currently registered in the system.</div></div></td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = vehicles.map(v => `<tr>
+                    <td><span style="font-weight:600;font-family:monospace;">${v.id}</span></td>
+                    <td><strong>${v.name}</strong></td>
+                    <td style="font-family:monospace;color:var(--cyan);">${v.license_plate}</td>
+                    <td>${v.type}</td>
+                    <td>${v.max_capacity_kg} kg</td>
+                    <td>${v.odometer_km} km</td>
+                    <td><span class="badge status-${v.registry_status === 'Available' ? 'Completed' : v.registry_status === 'Assigned' ? 'Dispatched' : 'Cancelled'}">${v.registry_status}</span></td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="retireVehicle('${v.id}')" ${v.registry_status === 'Out of Service' ? 'disabled' : ''}>Retire</button>
+                    </td>
+                </tr>`).join('');
+            } catch (e) { console.error('Vehicles error:', e); }
+        }
+
+        function openVehicleModal() {
+            ['v-id', 'v-name', 'v-plate'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('v-type').selectedIndex = 0;
+            document.getElementById('v-cap').value = '2000';
+            document.getElementById('v-odo').value = '0';
+            openModal('vehicle-modal');
+        }
+
+        async function saveVehicle() {
+            const vData = {
+                id: document.getElementById('v-id').value.trim(),
+                name: document.getElementById('v-name').value.trim(),
+                license_plate: document.getElementById('v-plate').value.trim(),
+                type: document.getElementById('v-type').value,
+                max_capacity_kg: parseFloat(document.getElementById('v-cap').value) || 2000,
+                odometer_km: parseFloat(document.getElementById('v-odo').value) || 0
+            };
+
+            if (!vData.id || !vData.name || !vData.license_plate) {
+                return showToast('ID, Name, and License Plate are required', 'warning');
+            }
+
+            try {
+                const r = await fetch(API + '/api/vehicles', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(vData)
+                });
+                if (r.ok) {
+                    showToast('Vehicle added successfully!');
+                    closeModal('vehicle-modal');
+                    broadcastUpdate();
+                } else {
+                    const err = await r.json();
+                    showToast(err.error || 'Failed to add vehicle', 'error');
+                }
+            } catch (e) { showToast('Network error', 'error'); }
+        }
+
+        async function retireVehicle(id) {
+            if (!confirm(`Are you sure you want to retire vehicle ${id}? It will be marked 'Out of Service'.`)) return;
+            try {
+                const r = await fetch(`${API}/api/vehicles/${id}`, {
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ registry_status: 'Out of Service' })
+                });
+                if (r.ok) {
+                    showToast(`Vehicle ${id} retired from service`);
+                    broadcastUpdate();
+                } else {
+                    const err = await r.json();
+                    showToast(err.error || 'Failed to retire vehicle', 'error');
+                }
+            } catch (e) { showToast('Network error', 'error'); }
+        }
+
+        // ── MAINTENANCE LOGS ──
+        async function loadMaintenance() {
+            try {
+                const r = await fetch(API + '/api/service-logs');
+                const logs = await r.json();
+                document.getElementById('maintenance-count').textContent = logs.length;
+                const tbody = document.getElementById('maintenance-tbody');
+
+                if (logs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><div class="empty-icon">🔧</div><div class="empty-text">No active or historical service logs.</div></div></td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = logs.map(l => {
+                    const start = new Date(l.start_date).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' });
+                    const end = l.end_date ? new Date(l.end_date).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+                    const safeId = String(l.id);
+                    return `<tr>
+                        <td style="font-size:11px;color:var(--t3);">${safeId.substring(0, 8)}${safeId.length > 8 ? '...' : ''}</td>
+                        <td><strong>${l.vehicle_id}</strong> <span style="font-size:11px;color:var(--t3);">(${l.vehicles?.license_plate})</span></td>
+                        <td><span class="badge badge-purple">${l.service_type}</span></td>
+                        <td><span class="badge status-${l.status === 'Open' ? 'Cancelled' : 'Completed'}">${l.status}</span></td>
+                        <td style="font-size:12px;">${start}</td>
+                        <td style="font-size:12px;">${end}</td>
+                        <td style="font-size:12px;max-width:200px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;">${l.notes || '—'}</td>
+                        <td>
+                            ${l.status === 'Open' ? `<button class="btn btn-success btn-sm" onclick="closeServiceLog('${l.id}')">✅ Finish Service</button>` : '<span style="color:var(--t3);font-size:12px;">Closed</span>'}
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch (e) { console.error('Maintenance error:', e); }
+        }
+
+        async function openMaintenanceModal() {
+            // Populate vehicles dropdown
+            try {
+                const r = await fetch(API + '/api/vehicles');
+                const vehicles = await r.json();
+                const sel = document.getElementById('m-vehicle');
+                sel.innerHTML = '<option value="">— Choose Vehicle —</option>';
+                vehicles.filter(v => v.registry_status !== 'Out of Service').forEach(v => {
+                    sel.innerHTML += `<option value="${v.id}">${v.id} — ${v.name} (${v.license_plate}) [${v.registry_status}]</option>`;
+                });
+            } catch (e) { }
+
+            document.getElementById('m-type').selectedIndex = 0;
+            document.getElementById('m-notes').value = '';
+            openModal('maintenance-modal');
+        }
+
+        async function saveMaintenance() {
+            const mData = {
+                vehicle_id: document.getElementById('m-vehicle').value,
+                service_type: document.getElementById('m-type').value,
+                notes: document.getElementById('m-notes').value.trim()
+            };
+
+            if (!mData.vehicle_id) {
+                return showToast('Please select a vehicle', 'warning');
+            }
+
+            try {
+                const r = await fetch(API + '/api/service-logs', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(mData)
+                });
+                if (r.ok) {
+                    showToast('Vehicle pushed to maintenance!');
+                    closeModal('maintenance-modal');
+                    broadcastUpdate();
+                } else {
+                    const err = await r.json();
+                    showToast(err.error || 'Failed to create service log', 'error');
+                }
+            } catch (e) { showToast('Network error', 'error'); }
+        }
+
+        async function closeServiceLog(id) {
+            const notes = prompt("Add any closing notes for this service (optional):");
+            if (notes === null) return; // User cancelled prompt
+
+            try {
+                const r = await fetch(`${API}/api/service-logs/${id}/close`, {
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ notes })
+                });
+                if (r.ok) {
+                    showToast('Service completed. Vehicle is now Available!');
+                    broadcastUpdate();
+                } else {
+                    const err = await r.json();
+                    showToast(err.error || 'Failed to close service log', 'error');
+                }
+            } catch (e) { showToast('Network error', 'error'); }
+        }
+
+        // ── GLOBAL SYNC ──
+        function broadcastUpdate() {
+            document.dispatchEvent(new Event('fleetDataChanged'));
+        }
+
+        document.addEventListener('fleetDataChanged', () => {
+            loadStats();
+            loadTrips();
+            loadVehicles();
+            loadMaintenance();
+            loadDrivers();
+
+            // Auto refresh dropdowns if in CREATE mode to maintain strict SSOT consistency
+            if (document.getElementById('tab-create').classList.contains('active')) {
+                loadFormSelects();
+            }
+        });
+
+        // ── INIT ──
+        broadcastUpdate();
+        // Centralized Background Sync (Polling 5s)
+        setInterval(broadcastUpdate, 5000);
+    </script>
+</body>
+
+</html>

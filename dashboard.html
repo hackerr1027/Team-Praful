@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Ahmedabad Fleet Management System</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+        }
+
+        #container {
+            display: flex;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        #main-area {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        #sidebar {
+            width: 350px;
+            background: #16213e;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        #sidebar h1 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #0f4c75;
+            border-bottom: 2px solid #0f4c75;
+            padding-bottom: 10px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section h2 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #3282b8;
+        }
+
+        #fleet-summary {
+            background: #0f4c75;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        #fleet-summary div {
+            margin: 5px 0;
+        }
+
+        #alerts-panel {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .alert-item {
+            background: rgba(255, 107, 107, 0.2);
+            border-left: 3px solid #ff6b6b;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+
+        .alert-item.medium {
+            background: rgba(255, 193, 7, 0.2);
+            border-left-color: #ffc107;
+        }
+
+        .alert-item.low {
+            background: rgba(255, 152, 0, 0.2);
+            border-left-color: #ff9800;
+        }
+
+        #vehicle-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .vinfo {
+            background: #0f4c75;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3282b8;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .vinfo:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(50, 130, 184, 0.4);
+        }
+
+        .vinfo.selected {
+            border-left-color: #4caf50;
+            background: #1a5a7a;
+        }
+
+        .vinfo strong {
+            color: #bbe1fa;
+            font-size: 16px;
+        }
+
+        .vinfo-detail {
+            font-size: 13px;
+            line-height: 1.8;
+            color: #ccc;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        .badge.active {
+            background: #4caf50;
+            color: white;
+        }
+
+        .badge.idle {
+            background: #9e9e9e;
+            color: white;
+        }
+
+        .badge.alert {
+            background: #ff6b6b;
+            color: white;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+
+        #analytics-drawer {
+            background: #16213e;
+            height: 250px;
+            padding: 20px;
+            overflow-y: auto;
+            border-top: 2px solid #0f4c75;
+            display: none;
+        }
+
+        #analytics-drawer.open {
+            display: block;
+        }
+
+        #analytics-drawer h2 {
+            color: #3282b8;
+            margin-bottom: 15px;
+        }
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: #0f4c75;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #bbe1fa;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4caf50;
+            margin-right: 5px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            padding: 10px;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .speed-warning {
+            color: #ff9800;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <div id="main-area">
+            <div id="sidebar">
+                <h1>🚚 Fleet Management</h1>
+
+                <a href="/command-center" style="display:block; margin-bottom:15px; padding:12px; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    border-radius:8px; text-decoration:none; color:white; font-size:13px; font-weight:600; text-align:center;
+                    transition:all 0.3s; box-shadow:0 4px 12px rgba(102,126,234,0.3);">
+                    📊 Open Command Center
+                </a>
+                <a href="/trip-dispatcher" style="display:block; margin-bottom:15px; padding:12px; background:linear-gradient(135deg, #10b981 0%, #06b6d4 100%); 
+                    border-radius:8px; text-decoration:none; color:white; font-size:13px; font-weight:600; text-align:center;
+                    transition:all 0.3s; box-shadow:0 4px 12px rgba(16,185,129,0.3);">
+                    🚛 Open Trip Dispatcher
+                </a>
+                <a href="/safety-officer" style="display:block; margin-bottom:15px; padding:12px; background:linear-gradient(135deg, #ef4444 0%, #f97316 100%); 
+                    border-radius:8px; text-decoration:none; color:white; font-size:13px; font-weight:600; text-align:center;
+                    transition:all 0.3s; box-shadow:0 4px 12px rgba(239,68,68,0.3);">
+                    🛡️ Open Safety Officer
+                </a>
+                <a href="/financial-analytics" style="display:block; margin-bottom:15px; padding:12px; background:linear-gradient(135deg, #10b981 0%, #06b6d4 100%); 
+                    border-radius:8px; text-decoration:none; color:white; font-size:13px; font-weight:600; text-align:center;
+                    transition:all 0.3s; box-shadow:0 4px 12px rgba(16,185,129,0.3);">
+                    💰 Open Financial Analytics
+                </a>
+
+                <!-- Connection Status Indicator -->
+                <div
+                    style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px;">
+                    <div style="display: flex; align-items: center;">
+                        <div id="connection-status"
+                            style="width: 12px; height: 12px; border-radius: 50%; background: #4caf50; margin-right: 10px; box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);">
+                        </div>
+                        <span id="connection-text" style="font-size: 13px; color: #aaa;">Connected</span>
+                    </div>
+                    <button id="reconnect-btn" onclick="reconnectToServer()" style="padding: 5px 12px; background: #3282b8; border: none; border-radius: 4px; 
+                        color: white; font-size: 11px; cursor: pointer; transition: all 0.2s; font-weight: 600;">
+                        🔄 Reconnect
+                    </button>
+                </div>
+
+                <!-- Vehicle Search Box -->
+                <div style="margin-bottom: 20px;">
+                    <input type="text" id="vehicle-search" placeholder="🔍 Search vehicles..."
+                        style="width: 100%; padding: 10px; background: #0f4c75; border: 1px solid #3282b8; border-radius: 5px; color: #eee; font-size: 14px;">
+                </div>
+
+                <!-- Fleet Summary with Enhanced Statistics -->
+                <div id="fleet-summary" class="section">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
+                        <div
+                            style="background: rgba(76, 175, 80, 0.2); padding: 10px; border-radius: 5px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #4caf50;"><span
+                                    id="active-count">0</span></div>
+                            <div style="font-size: 11px; color: #aaa;">Active</div>
+                        </div>
+                        <div
+                            style="background: rgba(158, 158, 158, 0.2); padding: 10px; border-radius: 5px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #9e9e9e;"><span
+                                    id="idle-count">0</span></div>
+                            <div style="font-size: 11px; color: #aaa;">Idle</div>
+                        </div>
+                        <div
+                            style="background: rgba(255, 107, 107, 0.2); padding: 10px; border-radius: 5px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #ff6b6b;"><span
+                                    id="alert-count">0</span></div>
+                            <div style="font-size: 11px; color: #aaa;">Alerts</div>
+                        </div>
+                        <div
+                            style="background: rgba(50, 130, 184, 0.2); padding: 10px; border-radius: 5px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #3282b8;"><span
+                                    id="total-count">0</span></div>
+                            <div style="font-size: 11px; color: #aaa;">Total Fleet</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 12px; color: #888; text-align: center; margin-top: 8px;">
+                        Updated <span id="last-update">-</span>
+                    </div>
+                </div>
+
+                <!-- Recenter Map Button -->
+                <button id="recenter-btn" onclick="recenterMap()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    border: none; border-radius: 5px; color: white; font-weight: bold; cursor: pointer; 
+                    margin-bottom: 20px; font-size: 14px; transition: all 0.3s;">
+                    🗺️ Recenter Map
+                </button>
+
+                <div class="section">
+                    <h2>🚨 Alerts</h2>
+                    <div id="alerts-panel">
+                        <div style="color: #888; font-size: 13px;">No alerts</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>🚗 Vehicles</h2>
+                    <div id="vehicle-list">
+                        <div class="vinfo" style="background: #333;">
+                            <span class="status-indicator"></span>
+                            Loading vehicles...
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="map"></div>
+        </div>
+        <div id="analytics-drawer">
+            <h2>📊 Analytics - <span id="analytics-vehicle">-</span></h2>
+            <div class="analytics-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Distance</div>
+                    <div class="stat-value"><span id="stat-distance">0</span> km</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Average Speed</div>
+                    <div class="stat-value"><span id="stat-avg-speed">0</span> km/h</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Max Speed</div>
+                    <div class="stat-value"><span id="stat-max-speed">0</span> km/h</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Route Progress</div>
+                    <div class="stat-value"><span id="stat-progress">0/0</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([23.0400, 72.5700], 11);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: "© OpenStreetMap"
+        }).addTo(map);
+
+        let markers = {};
+        let vehicles = {};
+        let routes = {};
+        let routeLines = {};
+        let historyLines = {};
+        let selectedVehicle = null;
+        let alerts = [];
+
+        const vehicleListDiv = document.getElementById('vehicle-list');
+        const alertsPanel = document.getElementById('alerts-panel');
+        const analyticsDrawer = document.getElementById('analytics-drawer');
+        const vehicleSearch = document.getElementById('vehicle-search');
+        const connectionStatus = document.getElementById('connection-status');
+        const connectionText = document.getElementById('connection-text');
+
+        let lastUpdateTime = Date.now();
+        let isConnected = true;
+
+        // Vehicle icon colors
+        const vehicleColors = {
+            'Truck': '#FF5722',
+            'Van': '#2196F3',
+            'Car': '#4CAF50'
+        };
+
+        // Load routes from backend
+        async function loadRoutes() {
+            try {
+                const response = await fetch('routes.json');
+                routes = await response.json();
+                drawRoutes();
+            } catch (error) {
+                console.error('Error loading routes:', error);
+            }
+        }
+
+        // Draw route lines on map
+        function drawRoutes() {
+            for (const [vehicleId, route] of Object.entries(routes)) {
+                const waypoints = route.waypoints.map(wp => [wp.lat, wp.lon]);
+                const color = vehicleColors[vehicleId.startsWith('T') ? 'Truck' :
+                    vehicleId.startsWith('V') ? 'Van' : 'Car'];
+
+                routeLines[vehicleId] = L.polyline(waypoints, {
+                    color: color,
+                    weight: 3,
+                    opacity: 0.4,
+                    dashArray: '10, 10'
+                }).addTo(map);
+
+                // Add waypoint markers
+                route.waypoints.forEach((wp, idx) => {
+                    if (idx > 0) { // Skip first waypoint to avoid clutter
+                        L.circleMarker([wp.lat, wp.lon], {
+                            radius: 4,
+                            fillColor: color,
+                            color: '#fff',
+                            weight: 1,
+                            opacity: 0.6,
+                            fillOpacity: 0.6
+                        }).addTo(map).bindPopup(`📍 ${wp.name}`);
+                    }
+                });
+            }
+        }
+
+        // Fetch fleet data
+        function getFleetAndUpdate() {
+            fetch('http://127.0.0.1:5500/fleet')
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                    return res.json();
+                })
+                .then(arr => {
+                    if (!Array.isArray(arr)) throw new Error('Invalid response format');
+
+                    vehicles = {};
+                    arr.forEach(v => {
+                        if (v && v.id && v.lat && v.lon) {
+                            vehicles[v.id] = v;
+                            updateVehicleMarker(v);
+                            updateHistoryTrail(v);
+                        }
+                    });
+                    updateFleetDisplay();
+                    updateFleetSummary();
+                })
+                .catch(error => {
+                    console.error('Error fetching fleet:', error);
+                    setConnectionStatus(false);
+                    vehicleListDiv.innerHTML = `
+                        <div class="error-message">
+                            ⚠️ Unable to connect to server<br>
+                            Make sure server.js is running on port 5500<br>
+                            <small style="color: #aaa;">Click the 🔄 Reconnect button to retry</small>
+                        </div>
+                    `;
+                });
+        }
+
+        // Fetch alerts
+        function getAlerts() {
+            fetch('http://127.0.0.1:5500/alerts')
+                .then(res => res.json())
+                .then(data => {
+                    alerts = data;
+                    updateAlertsPanel();
+                })
+                .catch(error => console.error('Error fetching alerts:', error));
+        }
+
+        // Update alerts panel
+        function updateAlertsPanel() {
+            if (alerts.length === 0) {
+                alertsPanel.innerHTML = '<div style="color: #888; font-size: 13px;">No active alerts</div>';
+                return;
+            }
+
+            alertsPanel.innerHTML = alerts.slice(0, 5).map(alert => `
+                <div class="alert-item ${alert.severity}">
+                    <strong>${alert.vehicle_id}</strong>: ${alert.message}
+                    <br><small>${new Date(alert.timestamp).toLocaleTimeString()}</small>
+                </div>
+            `).join('');
+        }
+
+        // Update fleet summary
+        function updateFleetSummary() {
+            const vehicleArray = Object.values(vehicles);
+            const activeCount = vehicleArray.filter(v => v.status === 'Active').length;
+            const idleCount = vehicleArray.filter(v => v.status !== 'Active').length;
+            const totalCount = vehicleArray.length;
+
+            document.getElementById('active-count').textContent = activeCount;
+            document.getElementById('idle-count').textContent = idleCount;
+            document.getElementById('alert-count').textContent = alerts.length;
+            document.getElementById('total-count').textContent = totalCount;
+
+            // Update last update time with relative format
+            lastUpdateTime = Date.now();
+            updateRelativeTime();
+
+            // Update connection status
+            setConnectionStatus(true);
+        }
+
+        // Update relative time display
+        function updateRelativeTime() {
+            const seconds = Math.floor((Date.now() - lastUpdateTime) / 1000);
+            let timeStr;
+            if (seconds < 60) {
+                timeStr = `${seconds}s ago`;
+            } else if (seconds < 3600) {
+                timeStr = `${Math.floor(seconds / 60)}m ago`;
+            } else {
+                timeStr = `${Math.floor(seconds / 3600)}h ago`;
+            }
+            document.getElementById('last-update').textContent = timeStr;
+        }
+
+        // Set connection status
+        function setConnectionStatus(connected) {
+            isConnected = connected;
+            if (connected) {
+                connectionStatus.style.background = '#4caf50';
+                connectionStatus.style.boxShadow = '0 0 8px rgba(76, 175, 80, 0.6)';
+                connectionText.textContent = 'Connected';
+                connectionText.style.color = '#4caf50';
+            } else {
+                connectionStatus.style.background = '#ff6b6b';
+                connectionStatus.style.boxShadow = '0 0 8px rgba(255, 107, 107, 0.6)';
+                connectionText.textContent = 'Disconnected';
+                connectionText.style.color = '#ff6b6b';
+            }
+        }
+
+        // Recenter map to fit all vehicles
+        function recenterMap() {
+            const vehicleArray = Object.values(vehicles);
+            if (vehicleArray.length === 0) {
+                map.setView([23.0400, 72.5700], 11);
+                return;
+            }
+
+            const bounds = L.latLngBounds(vehicleArray.map(v => [v.lat, v.lon]));
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+
+        // Update history trail
+        function updateHistoryTrail(v) {
+            fetch(`http://127.0.0.1:5500/vehicles/${v.id}/history?limit=50`)
+                .then(res => res.json())
+                .then(history => {
+                    if (history.length < 2) return;
+
+                    const points = history.reverse().map(h => [h.lat, h.lon]);
+                    const color = vehicleColors[v.type] || '#666';
+
+                    if (historyLines[v.id]) {
+                        historyLines[v.id].setLatLngs(points);
+                    } else {
+                        historyLines[v.id] = L.polyline(points, {
+                            color: color,
+                            weight: 4,
+                            opacity: 0.7
+                        }).addTo(map);
+                    }
+                })
+                .catch(err => console.error('Error fetching history:', err));
+        }
+
+        // Update vehicle marker
+        function updateVehicleMarker(v) {
+            if (!v.lat || !v.lon) return;
+
+            // Speed-based color coding
+            let color = vehicleColors[v.type] || '#666';
+            if (v.speed !== undefined && v.speed_limit) {
+                if (v.speed > v.speed_limit) {
+                    color = '#ff0000'; // Red for speeding
+                } else if (v.speed > v.speed_limit * 0.8) {
+                    color = '#ffa500'; // Orange for close to limit
+                }
+            }
+
+            // Create custom icon
+            const iconHtml = `
+                <div style="
+                    background: ${color};
+                    width: 30px;
+                    height: 30px;
+                    border-radius: 50%;
+                    border: 3px solid white;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 16px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                ">${v.type === 'Truck' ? '🚛' : v.type === 'Van' ? '🚐' : '🚗'}</div>
+            `;
+
+            const customIcon = L.divIcon({
+                html: iconHtml,
+                className: '',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+
+            if (!markers[v.id]) {
+                markers[v.id] = L.marker([v.lat, v.lon], {
+                    icon: customIcon,
+                    title: `${v.type} ${v.id}`
+                }).addTo(map).bindPopup("");
+            } else {
+                markers[v.id].setLatLng([v.lat, v.lon]);
+                markers[v.id].setIcon(customIcon);
+            }
+
+            const speedWarning = v.speed > v.speed_limit ? '<span class="speed-warning">⚠️ SPEEDING</span>' : '';
+
+            markers[v.id].setPopupContent(`
+                <strong>${v.type} (${v.id})</strong><br>
+                Speed: ${v.speed?.toFixed(1) || 0} km/h ${speedWarning}<br>
+                Status: ${v.status || 'Unknown'}<br>
+                Destination: ${v.destination || 'N/A'}<br>
+                ETA: ${v.eta_minutes || 0} min<br>
+                Progress: ${v.current_waypoint}/${v.total_waypoints}
+            `);
+        }
+
+        // Update fleet display
+        function updateFleetDisplay() {
+            const vehicleArray = Object.values(vehicles);
+
+            if (vehicleArray.length === 0) {
+                vehicleListDiv.innerHTML = `
+                    <div class="vinfo" style="background: #333;">
+                        <span class="status-indicator"></span>
+                        Waiting for vehicles...
+                    </div>
+                `;
+                return;
+            }
+
+            // Get search filter
+            const searchTerm = vehicleSearch.value.toLowerCase();
+
+            vehicleListDiv.innerHTML = "";
+            vehicleArray.forEach(v => {
+                // Apply search filter
+                const searchMatch = v.id.toLowerCase().includes(searchTerm) ||
+                    v.type.toLowerCase().includes(searchTerm) ||
+                    (v.destination && v.destination.toLowerCase().includes(searchTerm));
+
+                if (!searchMatch) return;
+                const hasAlert = alerts.some(a => a.vehicle_id === v.id);
+                const statusBadge = v.status === 'Active' ?
+                    `<span class="badge active">Active</span>` :
+                    `<span class="badge idle">Idle</span>`;
+                const alertBadge = hasAlert ? `<span class="badge alert">!</span>` : '';
+
+                const el = document.createElement("div");
+                el.className = "vinfo";
+                if (selectedVehicle === v.id) el.classList.add('selected');
+
+                el.innerHTML = `
+                    <span class="status-indicator"></span>
+                    <strong>${v.type} (${v.id})</strong>
+                    ${statusBadge}${alertBadge}
+                    <div class="vinfo-detail">
+                        Speed: ${v.speed?.toFixed(1) || 0} km/h
+                        ${v.speed > v.speed_limit ? '<span class="speed-warning">⚠️</span>' : ''}<br>
+                        Destination: ${v.destination || 'N/A'}<br>
+                        ETA: ${v.eta_minutes || 0} min | Progress: ${v.current_waypoint}/${v.total_waypoints}<br>
+                        Distance: ${v.distance_traveled?.toFixed(1) || 0} km
+                    </div>
+                `;
+
+                el.onclick = () => selectVehicle(v.id);
+                vehicleListDiv.appendChild(el);
+            });
+        }
+
+        // Select vehicle and show analytics
+        async function selectVehicle(vehicleId) {
+            selectedVehicle = vehicleId;
+            updateFleetDisplay();
+
+            // Center map on vehicle
+            const v = vehicles[vehicleId];
+            if (v) {
+                map.setView([v.lat, v.lon], 13);
+                markers[vehicleId].openPopup();
+            }
+
+            // Fetch and display analytics
+            try {
+                const response = await fetch(`http://127.0.0.1:5500/analytics/${vehicleId}`);
+                const analytics = await response.json();
+
+                document.getElementById('analytics-vehicle').textContent = vehicleId;
+                document.getElementById('stat-distance').textContent =
+                    analytics.current_distance?.toFixed(1) || '0';
+                document.getElementById('stat-avg-speed').textContent =
+                    analytics.avg_speed?.toFixed(1) || '0';
+                document.getElementById('stat-max-speed').textContent =
+                    analytics.max_speed?.toFixed(1) || '0';
+                document.getElementById('stat-progress').textContent =
+                    `${analytics.current_waypoint || 0}/${analytics.total_waypoints || 0}`;
+
+                analyticsDrawer.classList.add('open');
+            } catch (error) {
+                console.error('Error fetching analytics:', error);
+            }
+        }
+
+        // Vehicle search event listener
+        vehicleSearch.addEventListener('input', () => {
+            updateFleetDisplay();
+        });
+
+        // Reconnect to server function
+        function reconnectToServer() {
+            const reconnectBtn = document.getElementById('reconnect-btn');
+            reconnectBtn.textContent = '⏳ Connecting...';
+            reconnectBtn.disabled = true;
+            reconnectBtn.style.background = '#666';
+
+            // Clear existing data
+            vehicleListDiv.innerHTML = `
+                <div class="vinfo" style="background: #333;">
+                    <span class="status-indicator"></span>
+                    Attempting to reconnect...
+                </div>
+            `;
+
+            // Try to reconnect
+            setTimeout(() => {
+                getFleetAndUpdate();
+                getAlerts();
+
+                // Reset button after attempt
+                setTimeout(() => {
+                    reconnectBtn.textContent = '🔄 Reconnect';
+                    reconnectBtn.disabled = false;
+                    reconnectBtn.style.background = '#3282b8';
+                }, 1000);
+            }, 500);
+        }
+
+        // Recenter button style enhancement
+        const recenterBtn = document.getElementById('recenter-btn');
+        recenterBtn.addEventListener('mouseenter', () => {
+            recenterBtn.style.transform = 'scale(1.02)';
+            recenterBtn.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+        });
+        recenterBtn.addEventListener('mouseleave', () => {
+            recenterBtn.style.transform = 'scale(1)';
+            recenterBtn.style.boxShadow = 'none';
+        });
+
+        // Reconnect button style enhancement
+        const reconnectBtnEl = document.getElementById('reconnect-btn');
+        reconnectBtnEl.addEventListener('mouseenter', () => {
+            if (!reconnectBtnEl.disabled) {
+                reconnectBtnEl.style.background = '#4a9dd6';
+                reconnectBtnEl.style.transform = 'scale(1.05)';
+            }
+        });
+        reconnectBtnEl.addEventListener('mouseleave', () => {
+            if (!reconnectBtnEl.disabled) {
+                reconnectBtnEl.style.background = '#3282b8';
+                reconnectBtnEl.style.transform = 'scale(1)';
+            }
+        });
+
+        // Initialize
+        loadRoutes();
+        getFleetAndUpdate();
+        getAlerts();
+
+        // Update intervals
+        setInterval(getFleetAndUpdate, 5000);
+        setInterval(getAlerts, 10000);
+        setInterval(updateRelativeTime, 1000); // Update time every second
+    </script>
+</body>
+
+</html>

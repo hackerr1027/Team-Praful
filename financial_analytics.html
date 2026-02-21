@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Financial Analytics — Fleet Management</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Financial analytics dashboard for fleet cost tracking, fuel logging, and operational reporting.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a14;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f35;
+            --bg-card-hover: #222845;
+            --border: rgba(255, 255, 255, 0.06);
+            --text-primary: #f0f0f5;
+            --text-secondary: #8b8fa3;
+            --text-muted: #5a5e72;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --accent-orange: #f97316;
+            --accent-emerald: #34d399;
+            --glow-blue: rgba(59, 130, 246, 0.15);
+            --glow-green: rgba(16, 185, 129, 0.15);
+            --glow-red: rgba(239, 68, 68, 0.15);
+            --glow-purple: rgba(139, 92, 246, 0.15);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at 20% 0%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ─── Nav ─── */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 28px;
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-brand .logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent-emerald), var(--accent-cyan));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .nav-brand h1 {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .nav-brand .subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border: 1px solid transparent;
+            transition: 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-link.active {
+            color: var(--accent-emerald);
+            background: var(--glow-green);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 1;
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 24px 28px;
+        }
+
+        /* ─── Tabs ─── */
+        .tab-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            border-radius: 8px 8px 0 0;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            transition: 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-emerald);
+            background: var(--glow-green);
+            border-color: rgba(16, 185, 129, 0.2);
+            border-bottom-color: transparent;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ─── KPIs ─── */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 22px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+        }
+
+        .kpi-card.green::before {
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan));
+        }
+
+        .kpi-card.blue::before {
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+        }
+
+        .kpi-card.yellow::before {
+            background: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange));
+        }
+
+        .kpi-card.red::before {
+            background: linear-gradient(90deg, var(--accent-red), var(--accent-orange));
+        }
+
+        .kpi-card.purple::before {
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue));
+        }
+
+        .kpi-title {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .kpi-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .green .kpi-value {
+            color: var(--accent-green);
+        }
+
+        .blue .kpi-value {
+            color: var(--accent-blue);
+        }
+
+        .yellow .kpi-value {
+            color: var(--accent-yellow);
+        }
+
+        .red .kpi-value {
+            color: var(--accent-red);
+        }
+
+        .purple .kpi-value {
+            color: var(--accent-purple);
+        }
+
+        /* ─── Panels ─── */
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        /* ─── Forms ─── */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .form-input,
+        .form-select {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px var(--glow-blue);
+        }
+
+        .form-select option {
+            background: var(--bg-secondary);
+        }
+
+        /* ─── Buttons ─── */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-blue);
+            color: var(--text-primary);
+        }
+
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 12px;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
+            color: #fff;
+        }
+
+        /* ─── Tables ─── */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 10px 14px;
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table td {
+            padding: 12px 14px;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* ─── Badges ─── */
+        .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-green {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-blue {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .badge-yellow {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-yellow);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .badge-red {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* ─── Charts ─── */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .chart-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+
+        .chart-title {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        canvas {
+            max-height: 300px;
+        }
+
+        /* ─── Toast ─── */
+        .toast {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 14px 24px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 9999;
+            transform: translateX(110%);
+            transition: 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            background: var(--accent-green);
+            color: #fff;
+        }
+
+        .toast.error {
+            background: var(--accent-red);
+            color: #fff;
+        }
+
+        .toast.warning {
+            background: var(--accent-yellow);
+            color: #000;
+        }
+
+        /* ─── Export ─── */
+        .export-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* ─── Responsive ─── */
+        @media (max-width:768px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast" class="toast"></div>
+    <nav class="top-nav">
+        <div class="nav-brand">
+            <div class="logo">💰</div>
+            <div>
+                <h1>Financial Analytics</h1>
+                <div class="subtitle">Fleet Financial Intelligence</div>
+            </div>
+        </div>
+        <div class="nav-links">
+            <a href="/" class="nav-link">🗺️ Map View</a>
+            <a href="/command-center" class="nav-link">📊 Command Center</a>
+            <a href="/trip-dispatcher" class="nav-link">🚛 Dispatcher</a>
+            <a href="/safety-officer" class="nav-link">🛡️ Safety</a>
+            <a href="#" class="nav-link active">💰 Financial</a>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <!-- Tab Navigation -->
+        <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchTab('fuel-logging')">⛽ Fuel & Expense Logging</button>
+            <button class="tab-btn" onclick="switchTab('cost-engine')">⚙️ Cost Automation</button>
+            <button class="tab-btn" onclick="switchTab('analytics')">📈 Analytics & Reports</button>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- TAB 1: FUEL & EXPENSE LOGGING -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <div id="tab-fuel-logging" class="tab-content active">
+            <div class="kpi-grid">
+                <div class="kpi-card green">
+                    <div class="kpi-title">Total Fuel Cost</div>
+                    <div class="kpi-value" id="kpi-total-fuel">₹0</div>
+                    <div class="kpi-sub">All time</div>
+                </div>
+                <div class="kpi-card blue">
+                    <div class="kpi-title">Total Fuel (Liters)</div>
+                    <div class="kpi-value" id="kpi-total-liters">0</div>
+                    <div class="kpi-sub">All entries</div>
+                </div>
+                <div class="kpi-card yellow">
+                    <div class="kpi-title">Avg Cost / Liter</div>
+                    <div class="kpi-value" id="kpi-avg-cpl">₹0</div>
+                    <div class="kpi-sub">Fleet average</div>
+                </div>
+                <div class="kpi-card purple">
+                    <div class="kpi-title">Fuel Log Entries</div>
+                    <div class="kpi-value" id="kpi-fuel-entries">0</div>
+                    <div class="kpi-sub">Records</div>
+                </div>
+            </div>
+
+            <!-- Add Fuel Log Form -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">⛽ Log Fuel Expense</div>
+                </div>
+                <div class="panel-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Vehicle</label>
+                            <select id="fuel-vehicle" class="form-select">
+                                <option value="">Select Vehicle...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Completed Trip (optional)</label>
+                            <select id="fuel-trip" class="form-select">
+                                <option value="">No specific trip</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Fuel Liters</label>
+                            <input id="fuel-liters" type="number" step="0.01" min="0.1" class="form-input"
+                                placeholder="e.g. 45.5">
+                        </div>
+                        <div class="form-group">
+                            <label>Fuel Cost (₹)</label>
+                            <input id="fuel-cost" type="number" step="0.01" min="1" class="form-input"
+                                placeholder="e.g. 4500">
+                        </div>
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input id="fuel-date" type="date" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Notes</label>
+                            <input id="fuel-notes" type="text" class="form-input" placeholder="Optional notes">
+                        </div>
+                    </div>
+                    <div style="margin-top:16px; display:flex; gap:10px;">
+                        <button class="btn btn-success" onclick="saveFuelLog()">💾 Save Fuel Log</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fuel Log Table -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">📋 Fuel Log History</div>
+                    <div class="export-bar">
+                        <button class="btn btn-outline btn-sm" onclick="exportCSV('fuel')">📄 Export CSV</button>
+                        <button class="btn btn-outline btn-sm" onclick="refreshData()">🔄 Refresh</button>
+                    </div>
+                </div>
+                <div style="overflow-x:auto; max-height:500px; overflow-y:auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Vehicle</th>
+                                <th>Trip</th>
+                                <th>Liters</th>
+                                <th>Cost (₹)</th>
+                                <th>₹/Liter</th>
+                                <th>Notes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fuel-logs-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- TAB 2: COST AUTOMATION ENGINE -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <div id="tab-cost-engine" class="tab-content">
+            <div class="kpi-grid">
+                <div class="kpi-card green">
+                    <div class="kpi-title">Avg Cost / km</div>
+                    <div class="kpi-value" id="kpi-avg-cpk">₹0</div>
+                    <div class="kpi-sub">Fleet average</div>
+                </div>
+                <div class="kpi-card blue">
+                    <div class="kpi-title">Total Distance (km)</div>
+                    <div class="kpi-value" id="kpi-total-dist">0</div>
+                    <div class="kpi-sub">Completed trips</div>
+                </div>
+                <div class="kpi-card yellow">
+                    <div class="kpi-title">Total Operational Cost</div>
+                    <div class="kpi-value" id="kpi-total-opcost">₹0</div>
+                    <div class="kpi-sub">Fuel + Maintenance</div>
+                </div>
+                <div class="kpi-card red">
+                    <div class="kpi-title">Vehicles Tracked</div>
+                    <div class="kpi-value" id="kpi-vehicles-tracked">0</div>
+                    <div class="kpi-sub">With financial data</div>
+                </div>
+            </div>
+
+            <!-- Vehicle Financial Metrics Config -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">💼 Vehicle Financial Configuration</div>
+                </div>
+                <div class="panel-body">
+                    <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                        <div class="form-group">
+                            <label>Vehicle</label>
+                            <select id="fm-vehicle" class="form-select" onchange="loadVehicleMetrics()">
+                                <option value="">Select Vehicle...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Acquisition Cost (₹)</label>
+                            <input id="fm-acq-cost" type="number" step="1" min="0" class="form-input"
+                                placeholder="e.g. 1500000">
+                        </div>
+                        <div class="form-group">
+                            <label>Revenue per km (₹)</label>
+                            <input id="fm-rev-km" type="number" step="0.1" min="0" class="form-input"
+                                placeholder="e.g. 15">
+                        </div>
+                        <div class="form-group">
+                            <label>Monthly Insurance (₹)</label>
+                            <input id="fm-insurance" type="number" step="1" min="0" class="form-input"
+                                placeholder="e.g. 5000">
+                        </div>
+                    </div>
+                    <div style="margin-top:16px;">
+                        <button class="btn btn-primary" onclick="saveFinancialMetrics()">💾 Save Configuration</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Per-Vehicle Cost Breakdown Table -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">📊 Per-Vehicle Cost Breakdown</div>
+                    <button class="btn btn-outline btn-sm" onclick="exportCSV('cost')">📄 Export CSV</button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Vehicle</th>
+                                <th>Type</th>
+                                <th>Completed Trips</th>
+                                <th>Total km</th>
+                                <th>Fuel Cost</th>
+                                <th>Cost/km</th>
+                                <th>Fuel Efficiency</th>
+                                <th>Est. Revenue</th>
+                                <th>ROI %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cost-breakdown-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- TAB 3: ANALYTICS & REPORTS -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <div id="tab-analytics" class="tab-content">
+            <div class="kpi-grid">
+                <div class="kpi-card green">
+                    <div class="kpi-title">Fleet Avg Fuel Efficiency</div>
+                    <div class="kpi-value" id="kpi-fleet-eff">0</div>
+                    <div class="kpi-sub">km / liter</div>
+                </div>
+                <div class="kpi-card blue">
+                    <div class="kpi-title">Best Performing Vehicle</div>
+                    <div class="kpi-value" id="kpi-best-vehicle" style="font-size:18px;">—</div>
+                    <div class="kpi-sub" id="kpi-best-vehicle-sub">Highest efficiency</div>
+                </div>
+                <div class="kpi-card yellow">
+                    <div class="kpi-title">Estimated Revenue</div>
+                    <div class="kpi-value" id="kpi-est-revenue">₹0</div>
+                    <div class="kpi-sub">All completed trips</div>
+                </div>
+                <div class="kpi-card purple">
+                    <div class="kpi-title">Fleet Avg ROI</div>
+                    <div class="kpi-value" id="kpi-fleet-roi">0%</div>
+                    <div class="kpi-sub">Return on investment</div>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="panel" style="margin-bottom:24px;">
+                <div class="panel-body" style="padding:14px 20px;">
+                    <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+                        <div class="form-group" style="margin:0;">
+                            <label>Date From</label>
+                            <input id="filter-from" type="date" class="form-input" style="padding:6px 10px;">
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label>Date To</label>
+                            <input id="filter-to" type="date" class="form-input" style="padding:6px 10px;">
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label>Vehicle</label>
+                            <select id="filter-vehicle" class="form-select" style="padding:6px 10px;">
+                                <option value="">All Vehicles</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="applyFilters()" style="margin-top:18px;">Apply
+                            Filters</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <div class="chart-title">⛽ Fuel Cost Over Time</div>
+                    <canvas id="chart-fuel-cost"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">🏎️ Fuel Efficiency by Vehicle (km/L)</div>
+                    <canvas id="chart-fuel-eff"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">💰 Revenue vs Cost by Vehicle</div>
+                    <canvas id="chart-rev-cost"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">📊 Monthly Expense Breakdown</div>
+                    <canvas id="chart-monthly"></canvas>
+                </div>
+            </div>
+
+            <!-- Export Section -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">📥 Export Reports</div>
+                </div>
+                <div class="panel-body">
+                    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                        <button class="btn btn-success" onclick="exportCSV('full')">📄 Full Financial Report
+                            (CSV)</button>
+                        <button class="btn btn-primary" onclick="exportCSV('monthly')">📅 Monthly Summary (CSV)</button>
+                        <button class="btn btn-outline" onclick="exportCSV('fuel')">⛽ Fuel Logs Only (CSV)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = '';
+        let allVehicles = [];
+        let allTrips = [];
+        let allFuelLogs = [];
+        let financialSummary = [];
+        let charts = {};
+
+        // ═══════════════════════════════════════════
+        // TAB SWITCHING
+        // ═══════════════════════════════════════════
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            event.target.classList.add('active');
+            if (tab === 'analytics') renderCharts();
+        }
+
+        // ═══════════════════════════════════════════
+        // DATA LOADING
+        // ═══════════════════════════════════════════
+        async function refreshData() {
+            try {
+                const [vRes, tRes, fRes, sRes] = await Promise.all([
+                    fetch(`${API}/api/financial/vehicles`),
+                    fetch(`${API}/api/financial/completed-trips`),
+                    fetch(`${API}/api/financial/fuel-logs`),
+                    fetch(`${API}/api/financial/summary`)
+                ]);
+                allVehicles = await vRes.json();
+                allTrips = await tRes.json();
+                allFuelLogs = await fRes.json();
+                financialSummary = await sRes.json();
+            } catch (e) {
+                console.error('Data load failed:', e);
+                showToast('Failed to load data. Check server connection.', 'error');
+                return;
+            }
+
+            populateDropdowns();
+            renderFuelKPIs();
+            renderFuelTable();
+            renderCostKPIs();
+            renderCostTable();
+            renderAnalyticsKPIs();
+        }
+
+        function populateDropdowns() {
+            const vehicleDropdowns = ['fuel-vehicle', 'fm-vehicle', 'filter-vehicle'];
+            vehicleDropdowns.forEach(id => {
+                const sel = document.getElementById(id);
+                const curVal = sel.value;
+                const defaultOpt = id === 'filter-vehicle' ? '<option value="">All Vehicles</option>' : '<option value="">Select Vehicle...</option>';
+                sel.innerHTML = defaultOpt;
+                allVehicles.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.id;
+                    opt.textContent = `${v.name || v.id} (${v.type || 'Generic'})`;
+                    if (v.id === curVal) opt.selected = true;
+                    sel.appendChild(opt);
+                });
+            });
+
+            const tripSel = document.getElementById('fuel-trip');
+            const curTrip = tripSel.value;
+            tripSel.innerHTML = '<option value="">No specific trip</option>';
+            allTrips.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = `Trip #${t.trip_number || t.id.substring(0, 8)} — ${t.origin_name} → ${t.destination_name}`;
+                if (t.id === curTrip) opt.selected = true;
+                tripSel.appendChild(opt);
+            });
+
+            // Set default date
+            if (!document.getElementById('fuel-date').value) {
+                document.getElementById('fuel-date').value = new Date().toISOString().split('T')[0];
+            }
+        }
+
+        // ═══════════════════════════════════════════
+        // TAB 1: FUEL LOGGING
+        // ═══════════════════════════════════════════
+        function renderFuelKPIs() {
+            const totalCost = allFuelLogs.reduce((s, f) => s + parseFloat(f.fuel_cost || 0), 0);
+            const totalLiters = allFuelLogs.reduce((s, f) => s + parseFloat(f.fuel_liters || 0), 0);
+            const avgCPL = totalLiters > 0 ? totalCost / totalLiters : 0;
+            document.getElementById('kpi-total-fuel').textContent = '₹' + totalCost.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+            document.getElementById('kpi-total-liters').textContent = totalLiters.toFixed(1);
+            document.getElementById('kpi-avg-cpl').textContent = '₹' + avgCPL.toFixed(2);
+            document.getElementById('kpi-fuel-entries').textContent = allFuelLogs.length;
+        }
+
+        function renderFuelTable() {
+            const tbody = document.getElementById('fuel-logs-tbody');
+            if (allFuelLogs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:40px;">No fuel logs yet. Add your first entry above.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = allFuelLogs.map(f => `<tr>
+            <td>${f.fuel_date || '—'}</td>
+            <td><span class="badge badge-blue">${f.vehicle_id}</span></td>
+            <td style="font-size:11px;">${f.trip_id ? f.trip_id.substring(0, 8) + '...' : '—'}</td>
+            <td>${parseFloat(f.fuel_liters).toFixed(1)} L</td>
+            <td style="font-weight:600;">₹${parseFloat(f.fuel_cost).toLocaleString('en-IN')}</td>
+            <td>₹${f.cost_per_liter ? parseFloat(f.cost_per_liter).toFixed(2) : '—'}</td>
+            <td style="font-size:11px;color:var(--text-muted);">${f.notes || '—'}</td>
+            <td><button class="btn btn-danger btn-sm" onclick="deleteFuelLog('${f.id}')">🗑️</button></td>
+        </tr>`).join('');
+        }
+
+        async function saveFuelLog() {
+            const vehicle_id = document.getElementById('fuel-vehicle').value;
+            const trip_id = document.getElementById('fuel-trip').value || null;
+            const fuel_liters = parseFloat(document.getElementById('fuel-liters').value);
+            const fuel_cost = parseFloat(document.getElementById('fuel-cost').value);
+            const fuel_date = document.getElementById('fuel-date').value;
+            const notes = document.getElementById('fuel-notes').value.trim();
+
+            if (!vehicle_id) return showToast('Please select a vehicle', 'warning');
+            if (!fuel_liters || fuel_liters <= 0) return showToast('Enter valid fuel liters', 'warning');
+            if (!fuel_cost || fuel_cost <= 0) return showToast('Enter valid fuel cost', 'warning');
+            if (!fuel_date) return showToast('Select a date', 'warning');
+
+            try {
+                const res = await fetch(`${API}/api/financial/fuel-logs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ vehicle_id, trip_id, fuel_liters, fuel_cost, fuel_date, notes })
+                });
+                if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Failed'); }
+                showToast('Fuel log saved! Cost metrics updated automatically.', 'success');
+                document.getElementById('fuel-liters').value = '';
+                document.getElementById('fuel-cost').value = '';
+                document.getElementById('fuel-notes').value = '';
+                refreshData();
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        async function deleteFuelLog(id) {
+            if (!confirm('Delete this fuel log entry?')) return;
+            try {
+                await fetch(`${API}/api/financial/fuel-logs/${id}`, { method: 'DELETE' });
+                showToast('Fuel log deleted. Metrics recalculated.', 'success');
+                refreshData();
+            } catch (err) { showToast('Delete failed', 'error'); }
+        }
+
+        // ═══════════════════════════════════════════
+        // TAB 2: COST ENGINE
+        // ═══════════════════════════════════════════
+        function renderCostKPIs() {
+            if (financialSummary.length === 0) return;
+            const totalDist = financialSummary.reduce((s, v) => s + parseFloat(v.total_distance_km || 0), 0);
+            const totalFuel = financialSummary.reduce((s, v) => s + parseFloat(v.total_fuel_cost || 0), 0);
+            const avgCPK = totalDist > 0 ? totalFuel / totalDist : 0;
+            const tracked = financialSummary.filter(v => parseFloat(v.total_fuel_cost) > 0 || parseFloat(v.completed_trips) > 0).length;
+
+            document.getElementById('kpi-avg-cpk').textContent = '₹' + avgCPK.toFixed(2);
+            document.getElementById('kpi-total-dist').textContent = totalDist.toFixed(0);
+            document.getElementById('kpi-total-opcost').textContent = '₹' + totalFuel.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+            document.getElementById('kpi-vehicles-tracked').textContent = tracked;
+        }
+
+        function renderCostTable() {
+            const tbody = document.getElementById('cost-breakdown-tbody');
+            if (financialSummary.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:40px;">No financial data yet. Add fuel logs or vehicle configurations.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = financialSummary.map(v => {
+                const cpk = parseFloat(v.cost_per_km || 0);
+                const eff = parseFloat(v.fuel_efficiency_kmpl || 0);
+                const roi = parseFloat(v.roi_percent || 0);
+                const cpkBadge = cpk > 10 ? 'badge-red' : cpk > 5 ? 'badge-yellow' : 'badge-green';
+                const effBadge = eff < 3 ? 'badge-red' : eff < 6 ? 'badge-yellow' : 'badge-green';
+                const roiBadge = roi < 0 ? 'badge-red' : roi < 50 ? 'badge-yellow' : 'badge-green';
+                return `<tr>
+                <td><span style="font-weight:600;">${v.vehicle_name || v.vehicle_id}</span></td>
+                <td><span class="badge badge-blue">${v.vehicle_type || 'Generic'}</span></td>
+                <td>${v.completed_trips || 0}</td>
+                <td>${parseFloat(v.total_distance_km || 0).toFixed(1)}</td>
+                <td style="font-weight:600;">₹${parseFloat(v.total_fuel_cost || 0).toLocaleString('en-IN')}</td>
+                <td><span class="badge ${cpkBadge}">₹${cpk.toFixed(2)}</span></td>
+                <td><span class="badge ${effBadge}">${eff.toFixed(1)} km/L</span></td>
+                <td>₹${parseFloat(v.estimated_revenue || 0).toLocaleString('en-IN')}</td>
+                <td><span class="badge ${roiBadge}">${roi.toFixed(1)}%</span></td>
+            </tr>`;
+            }).join('');
+        }
+
+        async function loadVehicleMetrics() {
+            const vid = document.getElementById('fm-vehicle').value;
+            if (!vid) return;
+            try {
+                const res = await fetch(`${API}/api/financial/metrics/${vid}`);
+                if (res.ok) {
+                    const m = await res.json();
+                    document.getElementById('fm-acq-cost').value = m.acquisition_cost || '';
+                    document.getElementById('fm-rev-km').value = m.revenue_per_km || 15;
+                    document.getElementById('fm-insurance').value = m.insurance_monthly || '';
+                } else {
+                    document.getElementById('fm-acq-cost').value = '';
+                    document.getElementById('fm-rev-km').value = 15;
+                    document.getElementById('fm-insurance').value = '';
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function saveFinancialMetrics() {
+            const vehicle_id = document.getElementById('fm-vehicle').value;
+            if (!vehicle_id) return showToast('Select a vehicle', 'warning');
+            const data = {
+                vehicle_id,
+                acquisition_cost: parseFloat(document.getElementById('fm-acq-cost').value) || 0,
+                revenue_per_km: parseFloat(document.getElementById('fm-rev-km').value) || 15,
+                insurance_monthly: parseFloat(document.getElementById('fm-insurance').value) || 0
+            };
+            try {
+                const res = await fetch(`${API}/api/financial/metrics`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (!res.ok) throw new Error('Failed');
+                showToast('Financial config saved! ROI recalculated.', 'success');
+                refreshData();
+            } catch (err) { showToast('Error saving', 'error'); }
+        }
+
+        // ═══════════════════════════════════════════
+        // TAB 3: ANALYTICS
+        // ═══════════════════════════════════════════
+        function renderAnalyticsKPIs() {
+            if (financialSummary.length === 0) return;
+            const withFuel = financialSummary.filter(v => parseFloat(v.fuel_efficiency_kmpl) > 0);
+            const avgEff = withFuel.length > 0 ? withFuel.reduce((s, v) => s + parseFloat(v.fuel_efficiency_kmpl), 0) / withFuel.length : 0;
+            const totalRev = financialSummary.reduce((s, v) => s + parseFloat(v.estimated_revenue || 0), 0);
+            const withROI = financialSummary.filter(v => parseFloat(v.roi_percent) !== 0);
+            const avgROI = withROI.length > 0 ? withROI.reduce((s, v) => s + parseFloat(v.roi_percent), 0) / withROI.length : 0;
+
+            let best = withFuel.sort((a, b) => parseFloat(b.fuel_efficiency_kmpl) - parseFloat(a.fuel_efficiency_kmpl))[0];
+
+            document.getElementById('kpi-fleet-eff').textContent = avgEff.toFixed(1);
+            document.getElementById('kpi-best-vehicle').textContent = best ? (best.vehicle_name || best.vehicle_id) : '—';
+            document.getElementById('kpi-best-vehicle-sub').textContent = best ? `${parseFloat(best.fuel_efficiency_kmpl).toFixed(1)} km/L` : 'No data yet';
+            document.getElementById('kpi-est-revenue').textContent = '₹' + totalRev.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+            document.getElementById('kpi-fleet-roi').textContent = avgROI.toFixed(1) + '%';
+        }
+
+        function renderCharts() {
+            // Destroy existing charts
+            Object.values(charts).forEach(c => c.destroy());
+            charts = {};
+
+            const chartDefaults = {
+                responsive: true, plugins: { legend: { labels: { color: '#8b8fa3', font: { size: 11 } } } },
+                scales: {
+                    x: { ticks: { color: '#5a5e72' }, grid: { color: 'rgba(255,255,255,0.03)' } },
+                    y: { ticks: { color: '#5a5e72' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                }
+            };
+
+            // 1. Fuel Cost Over Time (monthly aggregation)
+            const monthly = {};
+            allFuelLogs.forEach(f => {
+                const m = f.fuel_date ? f.fuel_date.substring(0, 7) : 'Unknown';
+                monthly[m] = (monthly[m] || 0) + parseFloat(f.fuel_cost || 0);
+            });
+            const mLabels = Object.keys(monthly).sort();
+            charts.fuelCost = new Chart(document.getElementById('chart-fuel-cost'), {
+                type: 'line', data: {
+                    labels: mLabels.length > 0 ? mLabels : ['No data'],
+                    datasets: [{
+                        label: 'Fuel Cost (₹)', data: mLabels.map(m => monthly[m]),
+                        borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.4
+                    }]
+                }, options: chartDefaults
+            });
+
+            // 2. Fuel Efficiency by Vehicle
+            const effData = financialSummary.filter(v => parseFloat(v.fuel_efficiency_kmpl) > 0);
+            charts.fuelEff = new Chart(document.getElementById('chart-fuel-eff'), {
+                type: 'bar', data: {
+                    labels: effData.length > 0 ? effData.map(v => v.vehicle_name || v.vehicle_id) : ['No data'],
+                    datasets: [{
+                        label: 'km/L', data: effData.map(v => parseFloat(v.fuel_efficiency_kmpl)),
+                        backgroundColor: ['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#ef4444', '#10b981'],
+                        borderRadius: 6
+                    }]
+                }, options: chartDefaults
+            });
+
+            // 3. Revenue vs Cost
+            const revCostData = financialSummary.filter(v => parseFloat(v.total_fuel_cost) > 0 || parseFloat(v.estimated_revenue) > 0);
+            charts.revCost = new Chart(document.getElementById('chart-rev-cost'), {
+                type: 'bar', data: {
+                    labels: revCostData.length > 0 ? revCostData.map(v => v.vehicle_name || v.vehicle_id) : ['No data'],
+                    datasets: [
+                        {
+                            label: 'Revenue (₹)', data: revCostData.map(v => parseFloat(v.estimated_revenue || 0)),
+                            backgroundColor: 'rgba(16,185,129,0.6)', borderRadius: 6
+                        },
+                        {
+                            label: 'Fuel Cost (₹)', data: revCostData.map(v => parseFloat(v.total_fuel_cost || 0)),
+                            backgroundColor: 'rgba(239,68,68,0.6)', borderRadius: 6
+                        }
+                    ]
+                }, options: chartDefaults
+            });
+
+            // 4. Monthly Expense Breakdown
+            charts.monthly = new Chart(document.getElementById('chart-monthly'), {
+                type: 'doughnut', data: {
+                    labels: mLabels.length > 0 ? mLabels : ['No data'],
+                    datasets: [{
+                        data: mLabels.map(m => monthly[m]),
+                        backgroundColor: ['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#ef4444', '#10b981', '#f97316']
+                    }]
+                }, options: { responsive: true, plugins: { legend: { labels: { color: '#8b8fa3', font: { size: 11 } }, position: 'right' } } }
+            });
+        }
+
+        function applyFilters() {
+            // Re-render charts with filtered data (date + vehicle)
+            renderCharts();
+            showToast('Filters applied', 'success');
+        }
+
+        // ═══════════════════════════════════════════
+        // EXPORT
+        // ═══════════════════════════════════════════
+        function exportCSV(type) {
+            let csv = '';
+            let filename = '';
+
+            if (type === 'fuel') {
+                csv = 'Date,Vehicle,Trip,Liters,Cost,Cost/Liter,Notes\n';
+                allFuelLogs.forEach(f => {
+                    csv += `${f.fuel_date},${f.vehicle_id},${f.trip_id || ''},${f.fuel_liters},${f.fuel_cost},${f.cost_per_liter || ''},${(f.notes || '').replace(/,/g, ';')}\n`;
+                });
+                filename = 'fuel_logs_export.csv';
+            } else if (type === 'cost') {
+                csv = 'Vehicle,Type,Trips,Total km,Fuel Cost,Cost/km,Efficiency kmL,Revenue,ROI%\n';
+                financialSummary.forEach(v => {
+                    csv += `${v.vehicle_name || v.vehicle_id},${v.vehicle_type},${v.completed_trips},${v.total_distance_km},${v.total_fuel_cost},${v.cost_per_km},${v.fuel_efficiency_kmpl},${v.estimated_revenue},${v.roi_percent}\n`;
+                });
+                filename = 'cost_breakdown_export.csv';
+            } else if (type === 'monthly') {
+                const monthly = {};
+                allFuelLogs.forEach(f => {
+                    const m = f.fuel_date ? f.fuel_date.substring(0, 7) : 'Unknown';
+                    if (!monthly[m]) monthly[m] = { liters: 0, cost: 0, entries: 0 };
+                    monthly[m].liters += parseFloat(f.fuel_liters || 0);
+                    monthly[m].cost += parseFloat(f.fuel_cost || 0);
+                    monthly[m].entries++;
+                });
+                csv = 'Month,Total Liters,Total Cost,Entries,Avg Cost/Liter\n';
+                Object.entries(monthly).sort().forEach(([m, d]) => {
+                    csv += `${m},${d.liters.toFixed(1)},${d.cost.toFixed(2)},${d.entries},${(d.cost / d.liters).toFixed(2)}\n`;
+                });
+                filename = 'monthly_summary_export.csv';
+            } else {
+                // Full combined report
+                csv = 'Vehicle,Type,Total km,Fuel Liters,Fuel Cost,Cost/km,Efficiency kmL,Revenue,ROI%,Completed Trips\n';
+                financialSummary.forEach(v => {
+                    csv += `${v.vehicle_name || v.vehicle_id},${v.vehicle_type},${v.total_distance_km},${v.total_fuel_liters},${v.total_fuel_cost},${v.cost_per_km},${v.fuel_efficiency_kmpl},${v.estimated_revenue},${v.roi_percent},${v.completed_trips}\n`;
+                });
+                filename = 'full_financial_report.csv';
+            }
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename; a.click();
+            URL.revokeObjectURL(url);
+            showToast(`Exported ${filename}`, 'success');
+        }
+
+        // ═══════════════════════════════════════════
+        // TOAST
+        // ═══════════════════════════════════════════
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast ${type} show`;
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        // ═══════════════════════════════════════════
+        // INIT
+        // ═══════════════════════════════════════════
+        refreshData();
+        setInterval(refreshData, 15000);
+    </script>
+</body>
+
+</html>

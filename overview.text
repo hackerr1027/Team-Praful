@@ -1,0 +1,93 @@
+================================================================================
+AUTONOMOUS FLEET MANAGEMENT SYSTEM (AFMS) - COMPREHENSIVE PROJECT OVERVIEW
+================================================================================
+
+1. EXECUTIVE SUMMARY
+--------------------------------------------------------------------------------
+The AFMS is a robust, full-stack enterprise platform designed for real-time fleet operations, telemetry monitoring, safety surveillance, trip dispatching, and financial analytics. Built using a modern polyglot architecture, it handles everything from core database operations and RESTful APIs via a Node.js server, complex algorithmic logic with a fast C++ engine, computer vision techniques for driver safety via Python, and a responsive frontend suite using native web technologies.
+
+2. ARCHITECTURE & TECHNOLOGY STACK
+--------------------------------------------------------------------------------
+*   Backend REST API: Node.js with Express.js
+*   Database Engine: Supabase (PostgreSQL)
+*   Optimization Engine: C++ (compiled to an executable 'afms_backend.exe') utilizing `cpp-httplib` for handling high-performance pathfinding, graph simulation, and driver-to-vehicle allocation.
+*   Artificial Intelligence Integration: Python scripts utilizing OpenCV and MediaPipe for facial landmark recognition (Drowsiness and Yawning Detection via EAR and MAR formulas) interfacing directly with the backend.
+*   Frontend Presentation: HTML5, CSS3, Vanilla JavaScript, Chart.js (for analytics), Leaflet.js (for live GPS mapping).
+
+3. DATABASE SCHEMA & RELATIONSHIPS
+--------------------------------------------------------------------------------
+The system is built on a highly relational PostgreSQL schema initialized via Supabase.
+
+*   `vehicles`: Stores the core asset registry.
+    *   Columns include: `id` (e.g., V-123), `name`, `type` (Truck, Van, Car), `status` (Live tracking: Idle, Moving, Offline), `registry_status` (Availability context: Available, Assigned, In Shop, Out of Service), `odometer_km` (Tracks total distance used in financial metrics), `license_plate`, `max_capacity_kg`.
+    *   Trigger: `check_odometer_increase` prevents the odometer from ever rolling back, throwing a PostgreSQL exception if a requested odometer update is less than the current value.
+
+*   `drivers`: Stores human operators.
+    *   Columns: `id`, `name`, `license_type`, `status` (Available, On Trip, Off Duty).
+
+*   `trips`: Manages the lifecycle of a dispatch.
+    *   Columns: `id`, `trip_number`, `vehicle_id`, `driver_id`, `origin_name`, `destination_name`, `status` (Draft, Dispatched, In Transit, Completed, Cancelled), `cargo_type`, `estimated_distance_km`, and timestamps (`pickup_time`, `delivery_deadline`).
+    *   Concurrency relies on an optimistic locking system using a `version` integer that increments to prevent race conditions during status updates.
+
+*   `service_logs`: Maintenance tracking.
+    *   Columns: `vehicle_id`, `service_type` (Preventative, Repair), `status` (Open, Closed).
+    *   Trigger: `update_vehicle_status_on_service`. Automatically locks a vehicle's `registry_status` to "In Shop" when a log is Opened, and unlocks it back to "Available" when Closed (provided no other logs are open).
+
+*   `financial_metrics` & `fuel_logs`: ROI and Operational Cost tables.
+    *   Financial base metrics like `acquisition_cost` and `revenue_per_km` are stored per vehicle.
+    *   Fuel Logs append records of `fuel_liters` and `fuel_cost` to calculate fleet efficiency.
+
+4. CORE MODULES & LOGICAL FLOWS
+--------------------------------------------------------------------------------
+
+A. Trip Dispatching Lifecycle (trip_dispatcher.html & server.js)
+    *   Drafting: Dispatchers define origin, destination, and cargo weight.
+    *   Soft Locking: To prevent duplicate assignments during dispatch, clicking a vehicle triggers a `/api/vehicles/:id/soft-lock` which holds the vehicle for 5 minutes.
+    *   Capacity Validation: The frontend ensures the selected vehicle's `max_capacity_kg` exceeds the trip's `cargo_weight_kg`.
+    *   License Matching: Only drivers whose `license_type` accommodates the vehicle `type` can be selected.
+    *   Transition Logic (State Machine): 
+        - [Draft] -> [Dispatched]: Moves driver and vehicle statuses out of 'Available'.
+        - [Dispatched] -> [In Transit]: Updates map coordinates dynamically.
+        - [In Transit] -> [Completed]: Frees the driver and vehicle back to 'Available', making them ready for a new trip. The vehicle's odometer updates based on the trip's estimated distance.
+
+B. The C++ Allocation & Routing Engine (afms_backend.cpp)
+    *   The C++ engine listens on a separate port and provides an optimized `/api/allocations` endpoint.
+    *   Graph Structure: The city/network is represented as an adjacency matrix or list with weighted edges representing time/distance.
+    *   Pathfinding: Evaluates optimal routes for trips factoring in dynamic traffic nodes (A* or Dijkstra simulation).
+    *   Assignment Algorithm: When multiple trips and vehicles are queued, the algorithm uses a greedy or cost-based heuristic to assign the optimal vehicle type to a load based on proximity and capacity.
+
+C. AI Driver Safety & Drowsiness Detection (dashcam_drowsiness.py)
+    *   Camera Feed: The script hooks into the standard webcam (simulating a dashcam).
+    *   MediaPipe Face Mesh: Scans the driver's face in real-time to find eye and mouth landmarks.
+    *   EAR Logic (Eye Aspect Ratio): Measures the vertical distance between the eyelids. If EAR drops below a threshold (e.g., 0.25) for a sustained number of frames (indicating eyes are closed), it triggers a Drowsiness Alert.
+    *   MAR Logic (Mouth Aspect Ratio): Detects yawning by tracking mouth opening.
+    *   Integration: When an event occurs, it plays a local alarm sound via `pygame` AND asynchronously sends a POST request to the Node.js API (`/api/alerts/:id/resolve`) which broadcasts the event to the Safety Officer UI.
+
+D. Live Tracking & Command Center (index.html & command_center.html)
+    *   Map Rendering: Uses Leaflet and OpenStreetMap tiles.
+    *   Data Sync: Periodically fetches active trip coordinates (`vehicle_lat`, `vehicle_lon`) and plots Custom CSS markers.
+    *   Command Center UI: A macro-level dashboard showing the system's pulse (active trips, driver statuses, current vehicle locations, connection polling, and Supabase database latency).
+
+E. Financial Analytics & Cost Automation (financial_analytics.html)
+    *   The financial logic abstracts real-world economic formulas to calculate fleet health.
+    *   Cost per km Formula: Total Fuel Cost / Odometer (or completed trip distance).
+    *   Fuel Efficiency (km/L) Formula: Total Distance / Total Liters of Fuel consumed.
+    *   Estimated Revenue Formula: Revenue expectation multiplier per km * Total Distance driven.
+    *   ROI % Formula: ((Revenue - Fuel Cost) / Asset Acquisition Cost) * 100%. 
+    *   Fallback Mechanism: If specific `trips` lack distance data natively, the system uniquely relies on the aggregate absolute `odometer_km` on the `vehicles` table coupled with total aggregated fuel log costs to enforce accurate long-term fleet tracking, circumventing partial data issues.
+    *   Visualization: Displays comprehensive Line, Doughnut, and Bar charts using Chart.js to map monthly operational expenditures and track the fleet's highest and lowest-performing assets.
+
+5. API ROUTE SUMMARY (Node.js Server)
+--------------------------------------------------------------------------------
+*   GET/POST `/api/vehicles`: CRUD for vehicle master data.
+*   PATCH `/api/vehicles/:id`: Updates odometer, manual statuses.
+*   GET/POST `/api/drivers`: CRUD for driver roster.
+*   GET/POST `/api/trips`: Initializes journeys.
+*   PATCH `/api/trips/:id/status`: Invokes state machine transformations (Draft->Complete).
+*   GET/POST `/api/service-logs`: Handles maintenance ticket creation.
+*   GET/POST `/api/financial/fuel-logs`: Records individual fueling events.
+*   GET `/api/financial/summary`: Aggregates the heavy mathematical formulas for the Dashboard returning joined metrics out of individual tables.
+
+6. CONCLUSION
+--------------------------------------------------------------------------------
+The AFMS successfully integrates standard web methodologies with lower-level algorithms (C++) and real-time Artificial Intelligence (Python). Its state machine guarantees that commercial constraints (driver limits, vehicle capacities, database race conditions) are respected, whilst the underlying Supabase postgres structure uses built-in triggers to guarantee data integrity across interconnected service layers organically.

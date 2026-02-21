@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Command Center — Fleet Intelligence</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Fleet Management Command Center — Real-time operational intelligence dashboard for fleet oversight">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a14;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f35;
+            --bg-card-hover: #222845;
+            --border: rgba(255, 255, 255, 0.06);
+            --text-primary: #f0f0f5;
+            --text-secondary: #8b8fa3;
+            --text-muted: #5a5e72;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --accent-orange: #f97316;
+            --glow-blue: rgba(59, 130, 246, 0.15);
+            --glow-green: rgba(16, 185, 129, 0.15);
+            --glow-red: rgba(239, 68, 68, 0.15);
+            --glow-yellow: rgba(245, 158, 11, 0.15);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Background grid effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(ellipse at 20% 0%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ─── TOP NAV ─── */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 28px;
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-brand .logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .nav-brand h1 {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, #a0aec0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-brand .subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 400;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .nav-link {
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--border);
+        }
+
+        .nav-link.active {
+            color: var(--accent-blue);
+            background: var(--glow-blue);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .connection-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .connection-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+            animation: dotPulse 2s infinite;
+        }
+
+        @keyframes dotPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+            }
+
+            50% {
+                opacity: 0.6;
+                box-shadow: 0 0 16px rgba(16, 185, 129, 0.8);
+            }
+        }
+
+        /* ─── MAIN CONTAINER ─── */
+        .main-container {
+            position: relative;
+            z-index: 1;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 24px 28px;
+        }
+
+        /* ─── HEALTH GAUGE SECTION ─── */
+        .health-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .health-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .gauge-container {
+            position: relative;
+            width: 220px;
+            height: 130px;
+            margin-bottom: 8px;
+        }
+
+        .gauge-canvas {
+            width: 220px;
+            height: 130px;
+        }
+
+        .gauge-value {
+            position: absolute;
+            bottom: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 44px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            transition: color 0.5s;
+        }
+
+        .gauge-suffix {
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        .health-status {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        .health-breakdown {
+            display: flex;
+            gap: 24px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .breakdown-item {
+            text-align: center;
+        }
+
+        .breakdown-item .label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+        }
+
+        .breakdown-item .val {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        /* ─── KPI CARDS ─── */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.25s;
+        }
+
+        .kpi-card:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+        }
+
+        .kpi-card.blue::before {
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+        }
+
+        .kpi-card.red::before {
+            background: linear-gradient(90deg, var(--accent-red), var(--accent-orange));
+        }
+
+        .kpi-card.green::before {
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan));
+        }
+
+        .kpi-card.yellow::before {
+            background: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange));
+        }
+
+        .kpi-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 14px;
+        }
+
+        .kpi-card.blue .kpi-icon {
+            background: var(--glow-blue);
+        }
+
+        .kpi-card.red .kpi-icon {
+            background: var(--glow-red);
+        }
+
+        .kpi-card.green .kpi-icon {
+            background: var(--glow-green);
+        }
+
+        .kpi-card.yellow .kpi-icon {
+            background: var(--glow-yellow);
+        }
+
+        .kpi-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+
+        .kpi-card.blue .kpi-value {
+            color: var(--accent-blue);
+        }
+
+        .kpi-card.red .kpi-value {
+            color: var(--accent-red);
+        }
+
+        .kpi-card.green .kpi-value {
+            color: var(--accent-green);
+        }
+
+        .kpi-card.yellow .kpi-value {
+            color: var(--accent-yellow);
+        }
+
+        .kpi-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* ─── FILTER BAR ─── */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-right: 6px;
+        }
+
+        .filter-select {
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 130px;
+        }
+
+        .filter-select:hover {
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px var(--glow-blue);
+        }
+
+        .filter-select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .filter-apply-btn {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border: none;
+            border-radius: var(--radius-sm);
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .filter-apply-btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        .filter-reset-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .filter-reset-btn:hover {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-primary);
+        }
+
+        /* ─── CONTENT GRID ─── */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        /* ─── FLEET TABLE ─── */
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-badge {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            background: var(--glow-blue);
+            color: var(--accent-blue);
+        }
+
+        .fleet-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .fleet-table th {
+            text-align: left;
+            padding: 10px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .fleet-table td {
+            padding: 12px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            vertical-align: middle;
+        }
+
+        .fleet-table tbody tr {
+            transition: background 0.15s;
+        }
+
+        .fleet-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .vehicle-id-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .vehicle-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .vehicle-icon.truck {
+            background: rgba(255, 87, 34, 0.15);
+        }
+
+        .vehicle-icon.van {
+            background: rgba(33, 150, 243, 0.15);
+        }
+
+        .vehicle-icon.car {
+            background: rgba(76, 175, 80, 0.15);
+        }
+
+        .vehicle-name {
+            font-weight: 600;
+        }
+
+        .vehicle-type-tag {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-badge.on-trip {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+        }
+
+        .status-badge.in-shop {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+        }
+
+        .status-badge.assigned {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .status-badge.idle {
+            background: rgba(107, 114, 128, 0.15);
+            color: #9ca3af;
+        }
+
+        .fleet-table-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* ─── ALERTS PANEL ─── */
+        .alerts-list {
+            padding: 12px 16px;
+            max-height: 460px;
+            overflow-y: auto;
+        }
+
+        .alert-card {
+            padding: 12px 14px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 10px;
+            border-left: 3px solid;
+            transition: transform 0.15s;
+        }
+
+        .alert-card:hover {
+            transform: translateX(3px);
+        }
+
+        .alert-card.high {
+            background: rgba(239, 68, 68, 0.08);
+            border-left-color: var(--accent-red);
+        }
+
+        .alert-card.medium {
+            background: rgba(245, 158, 11, 0.08);
+            border-left-color: var(--accent-yellow);
+        }
+
+        .alert-card.low {
+            background: rgba(249, 115, 22, 0.08);
+            border-left-color: var(--accent-orange);
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .alert-vehicle {
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .alert-severity {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 8px;
+            text-transform: uppercase;
+        }
+
+        .alert-card.high .alert-severity {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+        }
+
+        .alert-card.medium .alert-severity {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent-yellow);
+        }
+
+        .alert-card.low .alert-severity {
+            background: rgba(249, 115, 22, 0.2);
+            color: var(--accent-orange);
+        }
+
+        .alert-msg {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .alert-time {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* ─── CHARTS ROW ─── */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .chart-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+
+        .chart-panel h3 {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 220px;
+        }
+
+        /* ─── PENDING CARGO ─── */
+        .cargo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 12px;
+            padding: 16px;
+        }
+
+        .cargo-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            transition: all 0.2s;
+        }
+
+        .cargo-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: var(--accent-yellow);
+        }
+
+        .cargo-id {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent-yellow);
+        }
+
+        .cargo-detail {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            line-height: 1.6;
+        }
+
+        .cargo-priority {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 6px;
+        }
+
+        .cargo-priority.Urgent {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+        }
+
+        .cargo-priority.High {
+            background: rgba(249, 115, 22, 0.15);
+            color: var(--accent-orange);
+        }
+
+        .cargo-priority.Medium {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-yellow);
+        }
+
+        .cargo-priority.Low {
+            background: rgba(107, 114, 128, 0.15);
+            color: #9ca3af;
+        }
+
+        /* ─── FOOTER ─── */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 11px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+        }
+
+        /* ─── NO DATA ─── */
+        .no-data {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .no-data .icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+            opacity: 0.5;
+        }
+
+        /* ─── SCROLLBAR ─── */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* ─── ANIMATIONS ─── */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-in {
+            animation: fadeInUp 0.4s ease-out;
+        }
+
+        .animate-in-d1 {
+            animation: fadeInUp 0.4s ease-out 0.05s both;
+        }
+
+        .animate-in-d2 {
+            animation: fadeInUp 0.4s ease-out 0.1s both;
+        }
+
+        .animate-in-d3 {
+            animation: fadeInUp 0.4s ease-out 0.15s both;
+        }
+
+        .animate-in-d4 {
+            animation: fadeInUp 0.4s ease-out 0.2s both;
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 1100px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .main-container {
+                padding: 16px;
+            }
+
+            .top-nav {
+                padding: 12px 16px;
+            }
+
+            .nav-brand .subtitle {
+                display: none;
+            }
+
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .health-breakdown {
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- TOP NAV -->
+    <nav class="top-nav">
+        <div class="nav-brand">
+            <div class="logo">🎯</div>
+            <div>
+                <h1>Command Center</h1>
+                <div class="subtitle">Ahmedabad Fleet Intelligence</div>
+            </div>
+        </div>
+        <div class="nav-links">
+            <a href="/" class="nav-link">🗺️ Map View</a>
+            <a href="/command-center" class="nav-link active">📊 Command Center</a>
+            <a href="/trip-dispatcher" class="nav-link">🚛 Dispatcher</a>
+            <a href="/safety-officer" class="nav-link">🛡️ Safety Officer</a>
+            <a href="/financial-analytics" class="nav-link">💰 Financial</a>
+            <div class="connection-pill" id="connection-pill">
+                <div class="connection-dot" id="connection-dot"></div>
+                <span id="connection-label">Connected</span>
+            </div>
+            <div class="connection-pill" id="supabase-pill"
+                style="background:rgba(139,92,246,0.1);border-color:rgba(139,92,246,0.2);">
+                <div class="connection-dot" id="supabase-dot"
+                    style="background:var(--accent-purple);box-shadow:0 0 8px rgba(139,92,246,0.6);"></div>
+                <span id="supabase-label" style="color:var(--accent-purple);">Supabase</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+
+        <!-- OPERATIONAL HEALTH SCORE -->
+        <section class="health-section animate-in">
+            <div class="health-label">Operational Health Score</div>
+            <div class="gauge-container">
+                <canvas class="gauge-canvas" id="healthGauge" width="440" height="260"></canvas>
+                <div class="gauge-value" id="healthValue" style="color: var(--accent-green);">
+                    0<span class="gauge-suffix">/100</span>
+                </div>
+            </div>
+            <div class="health-status" id="healthStatus" style="color: var(--accent-green);">Initializing...</div>
+            <div class="health-breakdown" id="healthBreakdown">
+                <div class="breakdown-item">
+                    <div class="label">Utilization</div>
+                    <div class="val" id="bd-util" style="color:var(--accent-blue)">-</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="label">Maintenance</div>
+                    <div class="val" id="bd-maint" style="color:var(--accent-green)">-</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="label">Compliance</div>
+                    <div class="val" id="bd-comp" style="color:var(--accent-cyan)">-</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="label">Active Ratio</div>
+                    <div class="val" id="bd-active" style="color:var(--accent-purple)">-</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="label">Low Idle</div>
+                    <div class="val" id="bd-idle" style="color:var(--accent-yellow)">-</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- KPI CARDS -->
+        <div class="kpi-grid">
+            <div class="kpi-card blue animate-in-d1">
+                <div class="kpi-icon">🚚</div>
+                <div class="kpi-title">Active Fleet</div>
+                <div class="kpi-value" id="kpi-active">0</div>
+                <div class="kpi-subtitle">Vehicles currently on trip</div>
+            </div>
+            <div class="kpi-card red animate-in-d2">
+                <div class="kpi-icon">🔧</div>
+                <div class="kpi-title">Maintenance Alerts</div>
+                <div class="kpi-value" id="kpi-maintenance">0</div>
+                <div class="kpi-subtitle">Vehicles in shop</div>
+            </div>
+            <div class="kpi-card green animate-in-d3">
+                <div class="kpi-icon">📈</div>
+                <div class="kpi-title">Utilization Rate</div>
+                <div class="kpi-value" id="kpi-utilization">0<span style="font-size:18px;font-weight:500;">%</span>
+                </div>
+                <div class="kpi-subtitle">Fleet assigned vs idle</div>
+            </div>
+            <div class="kpi-card yellow animate-in-d4">
+                <div class="kpi-icon">📦</div>
+                <div class="kpi-title">Pending Cargo</div>
+                <div class="kpi-value" id="kpi-cargo">0</div>
+                <div class="kpi-subtitle">Shipments awaiting assignment</div>
+            </div>
+        </div>
+
+        <!-- FILTER BAR -->
+        <div class="filter-bar animate-in">
+            <span class="filter-label">⚙ Filters</span>
+            <select class="filter-select" id="filter-type">
+                <option value="All">All Types</option>
+                <option value="Truck">🚛 Truck</option>
+                <option value="Van">🚐 Van</option>
+                <option value="Car">🚗 Car</option>
+            </select>
+            <select class="filter-select" id="filter-status">
+                <option value="All">All Status</option>
+                <option value="On Trip">On Trip</option>
+                <option value="In Shop">In Shop</option>
+                <option value="Assigned">Assigned</option>
+                <option value="Idle">Idle</option>
+            </select>
+            <select class="filter-select" id="filter-region">
+                <option value="All">All Regions</option>
+                <option value="North">North</option>
+                <option value="South">South</option>
+                <option value="East">East</option>
+                <option value="West">West</option>
+                <option value="Central">Central</option>
+            </select>
+            <button class="filter-apply-btn" onclick="applyFilters()">Apply Filters</button>
+            <button class="filter-reset-btn" onclick="resetFilters()">Reset</button>
+        </div>
+
+        <!-- FLEET TABLE + ALERTS -->
+        <div class="content-grid">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">🚗 Fleet Status <span class="panel-badge" id="fleet-count-badge">0</span>
+                    </div>
+                    <div style="font-size:11px; color:var(--text-muted);">Updated <span id="last-update">-</span></div>
+                </div>
+                <div class="fleet-table-body">
+                    <table class="fleet-table">
+                        <thead>
+                            <tr>
+                                <th>Vehicle</th>
+                                <th>Status</th>
+                                <th>Speed</th>
+                                <th>Region</th>
+                                <th>Destination</th>
+                                <th>Progress</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fleet-tbody">
+                            <tr>
+                                <td colspan="6">
+                                    <div class="no-data">
+                                        <div class="icon">🔄</div>Waiting for vehicle data...
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">🚨 Live Alerts <span class="panel-badge" id="alert-count-badge"
+                            style="background:var(--glow-red);color:var(--accent-red);">0</span></div>
+                </div>
+                <div class="alerts-list" id="alerts-list">
+                    <div class="no-data">
+                        <div class="icon">✅</div>No active alerts
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHARTS -->
+        <div class="charts-grid">
+            <div class="chart-panel">
+                <h3>Fleet Status Distribution</h3>
+                <div class="chart-container"><canvas id="statusChart"></canvas></div>
+            </div>
+            <div class="chart-panel">
+                <h3>Vehicles by Type</h3>
+                <div class="chart-container"><canvas id="typeChart"></canvas></div>
+            </div>
+            <div class="chart-panel">
+                <h3>Regional Distribution</h3>
+                <div class="chart-container"><canvas id="regionChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- PENDING CARGO -->
+        <div class="panel" style="margin-bottom:28px;">
+            <div class="panel-header">
+                <div class="panel-title">📦 Pending Cargo <span class="panel-badge" id="cargo-count-badge"
+                        style="background:var(--glow-yellow);color:var(--accent-yellow);">0</span></div>
+            </div>
+            <div class="cargo-grid" id="cargo-list">
+                <div class="no-data" style="grid-column:1/-1;">
+                    <div class="icon">📦</div>No pending cargo
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer">
+        AFMS Command Center v2.0 — Ahmedabad Fleet Management System &nbsp;|&nbsp; Real-time operational intelligence
+    </div>
+
+    <script>
+        // ═══ STATE ═══
+        let ccData = null;
+        let fleetData = [];
+        let statusChart, typeChart, regionChart;
+        let animatedHealthScore = 0;
+        let targetHealthScore = 0;
+        let isConnected = true;
+        let lastUpdateTime = Date.now();
+
+        // ═══ HEALTH GAUGE ═══
+        const gaugeCanvas = document.getElementById('healthGauge');
+        const gaugeCtx = gaugeCanvas.getContext('2d');
+
+        function drawGauge(score) {
+            const w = gaugeCanvas.width;
+            const h = gaugeCanvas.height;
+            const cx = w / 2;
+            const cy = h - 20;
+            const radius = 160;
+            const lineWidth = 18;
+
+            gaugeCtx.clearRect(0, 0, w, h);
+
+            // Background arc
+            gaugeCtx.beginPath();
+            gaugeCtx.arc(cx, cy, radius, Math.PI, 2 * Math.PI, false);
+            gaugeCtx.strokeStyle = 'rgba(255,255,255,0.06)';
+            gaugeCtx.lineWidth = lineWidth;
+            gaugeCtx.lineCap = 'round';
+            gaugeCtx.stroke();
+
+            // Score arc
+            const scoreAngle = Math.PI + (score / 100) * Math.PI;
+            const gradient = gaugeCtx.createLinearGradient(0, cy, w, cy);
+            if (score >= 80) {
+                gradient.addColorStop(0, '#10b981');
+                gradient.addColorStop(1, '#06d6a0');
+            } else if (score >= 60) {
+                gradient.addColorStop(0, '#f59e0b');
+                gradient.addColorStop(1, '#fbbf24');
+            } else {
+                gradient.addColorStop(0, '#ef4444');
+                gradient.addColorStop(1, '#f97316');
+            }
+
+            gaugeCtx.beginPath();
+            gaugeCtx.arc(cx, cy, radius, Math.PI, scoreAngle, false);
+            gaugeCtx.strokeStyle = gradient;
+            gaugeCtx.lineWidth = lineWidth;
+            gaugeCtx.lineCap = 'round';
+            gaugeCtx.stroke();
+
+            // Glow effect
+            gaugeCtx.beginPath();
+            gaugeCtx.arc(cx, cy, radius, Math.PI, scoreAngle, false);
+            gaugeCtx.strokeStyle = gradient;
+            gaugeCtx.lineWidth = lineWidth + 12;
+            gaugeCtx.globalAlpha = 0.12;
+            gaugeCtx.lineCap = 'round';
+            gaugeCtx.stroke();
+            gaugeCtx.globalAlpha = 1;
+
+            // Tick marks
+            for (let i = 0; i <= 10; i++) {
+                const angle = Math.PI + (i / 10) * Math.PI;
+                const isMajor = i % 2 === 0;
+                const inner = radius - lineWidth / 2 - (isMajor ? 16 : 10);
+                const outer = radius - lineWidth / 2 - 4;
+                gaugeCtx.beginPath();
+                gaugeCtx.moveTo(cx + Math.cos(angle) * inner, cy + Math.sin(angle) * inner);
+                gaugeCtx.lineTo(cx + Math.cos(angle) * outer, cy + Math.sin(angle) * outer);
+                gaugeCtx.strokeStyle = 'rgba(255,255,255,0.15)';
+                gaugeCtx.lineWidth = isMajor ? 2 : 1;
+                gaugeCtx.stroke();
+            }
+        }
+
+        function animateGauge() {
+            if (Math.abs(animatedHealthScore - targetHealthScore) > 0.5) {
+                animatedHealthScore += (targetHealthScore - animatedHealthScore) * 0.08;
+                drawGauge(animatedHealthScore);
+
+                const displayScore = Math.round(animatedHealthScore);
+                const valueEl = document.getElementById('healthValue');
+                const statusEl = document.getElementById('healthStatus');
+
+                valueEl.innerHTML = `${displayScore}<span class="gauge-suffix">/100</span>`;
+
+                let color, label;
+                if (displayScore >= 80) { color = 'var(--accent-green)'; label = 'Excellent'; }
+                else if (displayScore >= 60) { color = 'var(--accent-yellow)'; label = 'Good'; }
+                else if (displayScore >= 40) { color = 'var(--accent-orange)'; label = 'Fair'; }
+                else { color = 'var(--accent-red)'; label = 'Critical'; }
+
+                valueEl.style.color = color;
+                statusEl.style.color = color;
+                statusEl.textContent = label;
+
+                requestAnimationFrame(animateGauge);
+            } else {
+                drawGauge(targetHealthScore);
+            }
+        }
+
+        function updateHealthScore(score, breakdown) {
+            targetHealthScore = score;
+            requestAnimationFrame(animateGauge);
+
+            if (breakdown) {
+                document.getElementById('bd-util').textContent = breakdown.utilization + '%';
+                document.getElementById('bd-maint').textContent = breakdown.maintenance + '%';
+                document.getElementById('bd-comp').textContent = breakdown.compliance + '%';
+                document.getElementById('bd-active').textContent = breakdown.activeRatio + '%';
+                document.getElementById('bd-idle').textContent = breakdown.lowIdle + '%';
+            }
+        }
+
+        // ═══ KPI UPDATES ═══
+        function animateValue(elementId, newVal, suffix = '') {
+            const el = document.getElementById(elementId);
+            const current = parseFloat(el.textContent) || 0;
+            const diff = newVal - current;
+            const steps = 20;
+            let step = 0;
+
+            function tick() {
+                step++;
+                const progress = step / steps;
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const val = Math.round((current + diff * eased) * 10) / 10;
+                if (Number.isInteger(newVal)) {
+                    el.innerHTML = Math.round(val) + suffix;
+                } else {
+                    el.innerHTML = val.toFixed(1) + suffix;
+                }
+                if (step < steps) requestAnimationFrame(tick);
+            }
+            tick();
+        }
+
+        // ═══ FLEET TABLE ═══
+        function renderFleetTable(fleet) {
+            const tbody = document.getElementById('fleet-tbody');
+            document.getElementById('fleet-count-badge').textContent = fleet.length;
+
+            if (fleet.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6"><div class="no-data"><div class="icon">🔍</div>No vehicles match filters</div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = fleet.map(v => {
+                const iconClass = v.type.toLowerCase();
+                const emoji = v.type === 'Truck' ? '🚛' : v.type === 'Van' ? '🚐' : '🚗';
+                const statusClass = v.status.toLowerCase().replace(' ', '-');
+                const speedDisplay = v.speed ? v.speed.toFixed(1) : '0.0';
+                const speedWarning = (v.speed > v.speed_limit) ? ' <span style="color:var(--accent-red);font-weight:700;">⚠</span>' : '';
+
+                return `<tr>
+                <td><div class="vehicle-id-cell">
+                    <div class="vehicle-icon ${iconClass}">${emoji}</div>
+                    <div><div class="vehicle-name">${v.id}</div><div class="vehicle-type-tag">${v.type} • ${v.content || v.cargo || '-'}</div></div>
+                </div></td>
+                <td><span class="status-badge ${statusClass}">${v.status}</span></td>
+                <td>${speedDisplay} km/h${speedWarning}</td>
+                <td>${v.region || '-'}</td>
+                <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.destination || '-'}</td>
+                <td>${v.current_waypoint || 0}/${v.total_waypoints || 0}</td>
+            </tr>`;
+            }).join('');
+        }
+
+        // ═══ ALERTS ═══
+        function renderAlerts(alertsList) {
+            const container = document.getElementById('alerts-list');
+            document.getElementById('alert-count-badge').textContent = alertsList.length;
+
+            if (alertsList.length === 0) {
+                container.innerHTML = '<div class="no-data"><div class="icon">✅</div>No active alerts</div>';
+                return;
+            }
+
+            container.innerHTML = alertsList.map(a => `
+            <div class="alert-card ${a.severity}">
+                <div class="alert-header">
+                    <span class="alert-vehicle">${a.vehicle_id}</span>
+                    <span class="alert-severity">${a.severity}</span>
+                </div>
+                <div class="alert-msg">${a.message}</div>
+                <div class="alert-time">${new Date(a.timestamp).toLocaleTimeString()}</div>
+            </div>
+        `).join('');
+        }
+
+        // ═══ CARGO ═══
+        function renderCargo(cargoList) {
+            const container = document.getElementById('cargo-list');
+            document.getElementById('cargo-count-badge').textContent = cargoList.length;
+
+            if (cargoList.length === 0) {
+                container.innerHTML = '<div class="no-data" style="grid-column:1/-1;"><div class="icon">✅</div>All cargo assigned</div>';
+                return;
+            }
+
+            container.innerHTML = cargoList.map(c => `
+            <div class="cargo-card">
+                <div class="cargo-id">${c.id}</div>
+                <div class="cargo-detail">
+                    ${c.type}<br>
+                    📍 ${c.destination} · ${c.weight_kg} kg
+                </div>
+                <span class="cargo-priority ${c.priority}">${c.priority}</span>
+            </div>
+        `).join('');
+        }
+
+        // ═══ CHARTS ═══
+        const chartDefaults = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#8b8fa3', padding: 14, font: { family: 'Inter', size: 11 }, usePointStyle: true, pointStyleWidth: 8 }
+                }
+            }
+        };
+
+        function initCharts() {
+            statusChart = new Chart(document.getElementById('statusChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['On Trip', 'In Shop', 'Assigned', 'Idle'],
+                    datasets: [{ data: [0, 0, 0, 0], backgroundColor: ['#10b981', '#ef4444', '#3b82f6', '#6b7280'], borderWidth: 0, spacing: 3 }]
+                },
+                options: { ...chartDefaults, cutout: '68%' }
+            });
+
+            typeChart = new Chart(document.getElementById('typeChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Truck', 'Van', 'Car'],
+                    datasets: [{ label: 'Count', data: [0, 0, 0], backgroundColor: ['rgba(255,87,34,0.7)', 'rgba(33,150,243,0.7)', 'rgba(76,175,80,0.7)'], borderRadius: 6, borderSkipped: false }]
+                },
+                options: {
+                    ...chartDefaults,
+                    scales: {
+                        x: { ticks: { color: '#8b8fa3', font: { family: 'Inter' } }, grid: { display: false }, border: { display: false } },
+                        y: { ticks: { color: '#5a5e72', font: { family: 'Inter' }, stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { display: false } }
+                    },
+                    plugins: { ...chartDefaults.plugins, legend: { display: false } }
+                }
+            });
+
+            regionChart = new Chart(document.getElementById('regionChart'), {
+                type: 'polarArea',
+                data: {
+                    labels: ['North', 'South', 'East', 'West', 'Central'],
+                    datasets: [{ data: [0, 0, 0, 0, 0], backgroundColor: ['rgba(59,130,246,0.5)', 'rgba(16,185,129,0.5)', 'rgba(245,158,11,0.5)', 'rgba(139,92,246,0.5)', 'rgba(6,182,212,0.5)'], borderWidth: 0 }]
+                },
+                options: {
+                    ...chartDefaults,
+                    scales: {
+                        r: { ticks: { display: false }, grid: { color: 'rgba(255,255,255,0.04)' }, pointLabels: { color: '#8b8fa3' } }
+                    }
+                }
+            });
+        }
+
+        function updateCharts(data) {
+            if (!data) return;
+
+            // Status chart
+            const st = data.fleetByStatus || {};
+            statusChart.data.datasets[0].data = [st['On Trip'] || 0, st['In Shop'] || 0, st['Assigned'] || 0, st['Idle'] || 0];
+            statusChart.update('none');
+
+            // Type chart
+            const tp = data.fleetByType || {};
+            typeChart.data.datasets[0].data = [tp['Truck'] || 0, tp['Van'] || 0, tp['Car'] || 0];
+            typeChart.update('none');
+
+            // Region chart
+            const rg = data.fleetByRegion || {};
+            regionChart.data.datasets[0].data = [rg['North'] || 0, rg['South'] || 0, rg['East'] || 0, rg['West'] || 0, rg['Central'] || 0];
+            regionChart.update('none');
+        }
+
+        // ═══ FILTERS ═══
+        function getFilterParams() {
+            const type = document.getElementById('filter-type').value;
+            const status = document.getElementById('filter-status').value;
+            const region = document.getElementById('filter-region').value;
+            const params = new URLSearchParams();
+            if (type !== 'All') params.set('type', type);
+            if (status !== 'All') params.set('status', status);
+            if (region !== 'All') params.set('region', region);
+            return params.toString();
+        }
+
+        function applyFilters() {
+            fetchFleet();
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-type').value = 'All';
+            document.getElementById('filter-status').value = 'All';
+            document.getElementById('filter-region').value = 'All';
+            fetchFleet();
+        }
+
+        // ═══ DATA FETCHERS ═══
+        function fetchCommandCenterData() {
+            fetch('http://127.0.0.1:5500/command-center-data')
+                .then(res => { if (!res.ok) throw new Error('Network error'); return res.json(); })
+                .then(data => {
+                    ccData = data;
+                    setConnectionStatus(true);
+
+                    // Update Supabase indicator
+                    const sbDot = document.getElementById('supabase-dot');
+                    const sbLabel = document.getElementById('supabase-label');
+                    const sbPill = document.getElementById('supabase-pill');
+                    if (data.supabaseConnected) {
+                        sbDot.style.background = 'var(--accent-green)';
+                        sbDot.style.boxShadow = '0 0 8px rgba(16,185,129,0.6)';
+                        sbLabel.textContent = 'Supabase ✓';
+                        sbLabel.style.color = 'var(--accent-green)';
+                        sbPill.style.background = 'rgba(16,185,129,0.1)';
+                        sbPill.style.borderColor = 'rgba(16,185,129,0.2)';
+                    } else {
+                        sbDot.style.background = 'var(--accent-yellow)';
+                        sbDot.style.boxShadow = '0 0 8px rgba(245,158,11,0.6)';
+                        sbLabel.textContent = 'Supabase ✕';
+                        sbLabel.style.color = 'var(--accent-yellow)';
+                        sbPill.style.background = 'rgba(245,158,11,0.1)';
+                        sbPill.style.borderColor = 'rgba(245,158,11,0.2)';
+                    }
+
+                    // KPIs
+                    animateValue('kpi-active', data.kpis.activeFleet);
+                    animateValue('kpi-maintenance', data.kpis.maintenanceAlerts);
+                    document.getElementById('kpi-utilization').innerHTML =
+                        data.kpis.utilizationRate.toFixed(1) + '<span style="font-size:18px;font-weight:500;">%</span>';
+                    animateValue('kpi-cargo', data.kpis.pendingCargo);
+
+                    // Health Score
+                    updateHealthScore(data.healthScore, data.healthBreakdown);
+
+                    // Charts
+                    updateCharts(data);
+
+                    // Alerts
+                    renderAlerts(data.recentAlerts || []);
+
+                    // Cargo
+                    renderCargo(data.pendingCargoList || []);
+
+                    // Update time
+                    lastUpdateTime = Date.now();
+                    updateRelativeTime();
+                })
+                .catch(err => {
+                    console.error('Error fetching command center data:', err);
+                    setConnectionStatus(false);
+                });
+        }
+
+        function fetchFleet() {
+            const params = getFilterParams();
+            const url = params ? `http://127.0.0.1:5500/fleet?${params}` : 'http://127.0.0.1:5500/fleet';
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    fleetData = data;
+                    renderFleetTable(data);
+                })
+                .catch(err => console.error('Error fetching fleet:', err));
+        }
+
+        // ═══ CONNECTION STATUS ═══
+        function setConnectionStatus(connected) {
+            isConnected = connected;
+            const dot = document.getElementById('connection-dot');
+            const label = document.getElementById('connection-label');
+            const pill = document.getElementById('connection-pill');
+
+            if (connected) {
+                dot.style.background = 'var(--accent-green)';
+                dot.style.boxShadow = '0 0 8px rgba(16,185,129,0.6)';
+                label.textContent = 'Connected';
+                pill.style.background = 'rgba(16,185,129,0.1)';
+                pill.style.borderColor = 'rgba(16,185,129,0.2)';
+            } else {
+                dot.style.background = 'var(--accent-red)';
+                dot.style.boxShadow = '0 0 8px rgba(239,68,68,0.6)';
+                label.textContent = 'Disconnected';
+                pill.style.background = 'rgba(239,68,68,0.1)';
+                pill.style.borderColor = 'rgba(239,68,68,0.2)';
+            }
+        }
+
+        function updateRelativeTime() {
+            const seconds = Math.floor((Date.now() - lastUpdateTime) / 1000);
+            let str;
+            if (seconds < 5) str = 'just now';
+            else if (seconds < 60) str = seconds + 's ago';
+            else if (seconds < 3600) str = Math.floor(seconds / 60) + 'm ago';
+            else str = Math.floor(seconds / 3600) + 'h ago';
+            document.getElementById('last-update').textContent = str;
+        }
+
+        // ═══ INIT ═══
+        drawGauge(0);
+        initCharts();
+        fetchCommandCenterData();
+        fetchFleet();
+
+        // Polling
+        setInterval(fetchCommandCenterData, 5000);
+        setInterval(fetchFleet, 5000);
+        setInterval(updateRelativeTime, 1000);
+    </script>
+</body>
+
+</html>

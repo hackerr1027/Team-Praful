@@ -1,0 +1,146 @@
+{
+    "T1": {
+        "name": "Industrial Route - Naroda to GIDC",
+        "waypoints": [
+            {
+                "lat": 23.0670,
+                "lon": 72.6310,
+                "name": "Naroda Industrial Area"
+            },
+            {
+                "lat": 23.0650,
+                "lon": 72.6200,
+                "name": "Naroda Road"
+            },
+            {
+                "lat": 23.0580,
+                "lon": 72.6100,
+                "name": "Kubernagar"
+            },
+            {
+                "lat": 23.0500,
+                "lon": 72.6000,
+                "name": "Nikol"
+            },
+            {
+                "lat": 23.0400,
+                "lon": 72.5900,
+                "name": "CTM"
+            },
+            {
+                "lat": 23.0300,
+                "lon": 72.5800,
+                "name": "Vastral"
+            },
+            {
+                "lat": 23.0200,
+                "lon": 72.5700,
+                "name": "Odhav"
+            },
+            {
+                "lat": 23.0100,
+                "lon": 72.5650,
+                "name": "GIDC Industrial Estate"
+            }
+        ],
+        "cyclic": true,
+        "speed_limit": 60,
+        "cargo_type": "Industrial Goods"
+    },
+    "V1": {
+        "name": "Commercial Route - CG Road to SG Highway",
+        "waypoints": [
+            {
+                "lat": 23.0300,
+                "lon": 72.5500,
+                "name": "CG Road Business District"
+            },
+            {
+                "lat": 23.0280,
+                "lon": 72.5520,
+                "name": "Mithakhali"
+            },
+            {
+                "lat": 23.0250,
+                "lon": 72.5550,
+                "name": "Navrangpura"
+            },
+            {
+                "lat": 23.0200,
+                "lon": 72.5600,
+                "name": "Paldi"
+            },
+            {
+                "lat": 23.0150,
+                "lon": 72.5650,
+                "name": "Satellite"
+            },
+            {
+                "lat": 23.0100,
+                "lon": 72.5700,
+                "name": "Bodakdev"
+            },
+            {
+                "lat": 23.0050,
+                "lon": 72.5750,
+                "name": "SG Highway North"
+            },
+            {
+                "lat": 23.0000,
+                "lon": 72.5800,
+                "name": "Prahlad Nagar"
+            }
+        ],
+        "cyclic": true,
+        "speed_limit": 50,
+        "cargo_type": "Electronics"
+    },
+    "C1": {
+        "name": "Express Delivery - Railway Station to Airport",
+        "waypoints": [
+            {
+                "lat": 23.0225,
+                "lon": 72.5714,
+                "name": "Ahmedabad Railway Station"
+            },
+            {
+                "lat": 23.0250,
+                "lon": 72.5650,
+                "name": "Shahpur"
+            },
+            {
+                "lat": 23.0300,
+                "lon": 72.5600,
+                "name": "Ellis Bridge"
+            },
+            {
+                "lat": 23.0400,
+                "lon": 72.5500,
+                "name": "Ashram Road"
+            },
+            {
+                "lat": 23.0500,
+                "lon": 72.5400,
+                "name": "Maninagar"
+            },
+            {
+                "lat": 23.0600,
+                "lon": 72.5300,
+                "name": "Vatva"
+            },
+            {
+                "lat": 23.0650,
+                "lon": 72.5200,
+                "name": "Ramol"
+            },
+            {
+                "lat": 23.0700,
+                "lon": 72.5100,
+                "name": "Sardar Vallabhbhai Patel International Airport"
+            }
+        ],
+        "cyclic": true,
+        "speed_limit": 70,
+        "cargo_type": "Documents"
+    }
+}
