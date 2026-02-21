@@ -360,10 +360,10 @@ Add real screenshots for maximum impact.
 
 - Artificial Intelligence (Python)
 
-Scalable backend engineering (Node.js)
+- Scalable backend engineering (Node.js)
 
-Database integrity design (PostgreSQL)
+- Database integrity design (PostgreSQL)
 
-Financial modeling
+- Financial modeling
 
-Real-time telemetry visualization
+- Real-time telemetry visualization
