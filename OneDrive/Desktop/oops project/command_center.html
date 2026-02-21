@@ -929,6 +929,12 @@
                 <div class="connection-dot" id="connection-dot"></div>
                 <span id="connection-label">Connected</span>
             </div>
+            <div class="connection-pill" id="supabase-pill"
+                style="background:rgba(139,92,246,0.1);border-color:rgba(139,92,246,0.2);">
+                <div class="connection-dot" id="supabase-dot"
+                    style="background:var(--accent-purple);box-shadow:0 0 8px rgba(139,92,246,0.6);"></div>
+                <span id="supabase-label" style="color:var(--accent-purple);">Supabase</span>
+            </div>
         </div>
     </nav>
 
@@ -1424,6 +1430,26 @@
                 .then(data => {
                     ccData = data;
                     setConnectionStatus(true);
+
+                    // Update Supabase indicator
+                    const sbDot = document.getElementById('supabase-dot');
+                    const sbLabel = document.getElementById('supabase-label');
+                    const sbPill = document.getElementById('supabase-pill');
+                    if (data.supabaseConnected) {
+                        sbDot.style.background = 'var(--accent-green)';
+                        sbDot.style.boxShadow = '0 0 8px rgba(16,185,129,0.6)';
+                        sbLabel.textContent = 'Supabase ✓';
+                        sbLabel.style.color = 'var(--accent-green)';
+                        sbPill.style.background = 'rgba(16,185,129,0.1)';
+                        sbPill.style.borderColor = 'rgba(16,185,129,0.2)';
+                    } else {
+                        sbDot.style.background = 'var(--accent-yellow)';
+                        sbDot.style.boxShadow = '0 0 8px rgba(245,158,11,0.6)';
+                        sbLabel.textContent = 'Supabase ✕';
+                        sbLabel.style.color = 'var(--accent-yellow)';
+                        sbPill.style.background = 'rgba(245,158,11,0.1)';
+                        sbPill.style.borderColor = 'rgba(245,158,11,0.2)';
+                    }
 
                     // KPIs
                     animateValue('kpi-active', data.kpis.activeFleet);
